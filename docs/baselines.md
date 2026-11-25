@@ -103,3 +103,24 @@
 - 対応のある差: IoU は multiclass − square = +0.93 ポイント（標準誤差 0.11）。Boundary F は +3.58 ポイント（0.26）
 - Boundary F は IoU の約4倍の差でモデルを分ける。EasyPortrait を使うなら、IoU より Boundary F の方が改善を見やすい（推論）
 - 平均は高いが、IoU が 90% を下回る失敗画像が 10〜23枚ある。失敗の中身はまだ見ていない
+
+## 背景の透け（#5、2026-11-25 23:10 の実行）
+
+確信度をそのまま透明度に使って背景を差し替えると、multiclass では元の部屋が透ける。`bench/eval_soft_alpha.py data/easyportrait`（EasyPortrait テスト分割の800枚、seed 1）、結果 `bench/results/2026-11-25-soft-alpha/soft_alpha_ep800.json`。
+
+- 透け（bleed）は、正解の背景の画素での透明度の平均。穴（hole）は、正解の人物の画素での 1 − 透明度の平均。どちらも全画素で集計した
+
+| モデル | 透け: そのまま | 透け: smoothstep(0.2, 0.8) | 穴: そのまま | 穴: smoothstep(0.2, 0.8) |
+| --- | --- | --- | --- | --- |
+| selfie_multiclass_256x256 | 9.54% | 1.17% | 2.58% | 0.64% |
+| selfie_segmenter（square） | 1.99% | 1.78% | 1.10% | 0.87% |
+| selfie_segmenter_landscape | 2.13% | 1.86% | 1.49% | 1.20% |
+
+- multiclass は、背景の画素の 95.8% で確信度が 0.05〜0.1 にある。中身を見ると、背景の画素の多くで background クラスが約 0.917 にとどまり、他の5クラスが約 0.0167 ずつ残る。だから 1 − background は、背景のほとんどの画素で約 0.083 になる。最も下がる画素でも 0.04 程度（24枚で確認）
+- smoothstep(0.2, 0.8) をかけると、multiclass の透けは 9.54% から 1.17% に下がり、3モデルで最も小さくなる。しきい値 0.5 で2値化した場合（1.12%）とほぼ同じで、輪郭はなめらかなまま
+- しきい値 0.5 での IoU と Boundary F は、このカーブで変わらない（カーブは 0.5 を 0.5 に写す）。変わるのは合成の見た目
+- `bench/cutout.py` の合成は、このカーブを使うように変えた
+
+![そのままの合成（左）と smoothstep をかけた合成（右）](img/soft-alpha-office-peace.png)
+
+画像は、この変更の前後の `bench/cutout.py` で `office-peace.png` を処理し、multiclass の行の合成の列を左右に並べて縮小したもの。
