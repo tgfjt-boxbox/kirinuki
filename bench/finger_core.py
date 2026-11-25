@@ -1,9 +1,11 @@
 """Measure whether each baseline model keeps the fingers, using finger cores built from hand keypoints.
 
 usage: .venv/bin/python bench/finger_core.py OUT_DIR IMAGE...
-A finger core is a capsule along PIP -> DIP -> TIP of the MediaPipe hand landmarks, with radius
+A finger core is a capsule along the last three MediaPipe hand landmarks of each finger (PIP -> DIP -> TIP;
+MCP -> IP -> TIP for the thumb), with radius
 CORE_RADIUS x (wrist-to-middle-MCP distance). It sits inside the finger, so it gives finger recall, not IoU.
 Prints one JSON line per finger and writes an overlay of the cores for a visual check.
+Fingers whose core lies wholly outside the frame are skipped. Images with no detected hand are reported on stderr.
 """
 import json
 import sys
@@ -57,8 +59,13 @@ def main():
         }
         overlay = Image.fromarray(rgb)
         draw = ImageDraw.Draw(overlay)
-        for hand, landmarks in enumerate(hands.detect(image).hand_landmarks):
+        detected = hands.detect(image).hand_landmarks
+        if not detected:
+            print(f"{path.name}: no hand detected", file=sys.stderr)
+        for hand, landmarks in enumerate(detected):
             for finger, pts, r, core in cores(landmarks):
+                if not core.any():
+                    continue
                 recall = {name: float((prob[core] >= THRESHOLD).mean()) for name, prob in probs.items()}
                 kept = {name: v >= KEPT for name, v in recall.items()}
                 print(json.dumps({"image": path.name, "hand": hand, "finger": finger, "core_px": int(core.sum()),
