@@ -5,3 +5,4 @@ models/
 .cache/
 .DS_Store
 out/
+bench/browser/vendor/
