@@ -30,6 +30,10 @@ PYTHONPATH=bench .venv/bin/python bench/cutout.py out/ bench/materials/public/of
 
 # 指が残るかどうか（指の芯の再現率）を指ごとに測る。定義は docs/finger-metric.md
 PYTHONPATH=bench .venv/bin/python bench/finger_core.py out/ bench/materials/public/office-peace.png
+
+# 2つのランを1枚の HTML で比べる（指標の表と、改善・悪化が大きい画像の誤差マップ）
+R=bench/results/2026-11-25-baseline/baseline_iou_ep24.json
+PYTHONPATH=bench .venv/bin/python bench/compare.py "${R}:selfie_segmenter_landscape" "${R}:selfie_multiclass_256x256" --data data/easyportrait out/compare.html
 ```
 
 データセットの取得と評価の方法は [docs/datasets.md](docs/datasets.md) と各スクリプトの冒頭にある。
