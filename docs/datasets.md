@@ -21,7 +21,7 @@
 | **PPM-100** | ポートレートのマット（評価用） | 100枚 | マットは CC BY-NC-SA 4.0 | 評価のみ可 | ⚠️ |
 | **PP-HumanSeg14K** | ビデオ会議の映像から切り出したもの | 約1.4万枚 | データ自体のライセンスが見つからない（ローダーのコードは Apache 2.0） | 評価のみ可（要確認） | ⚠️ |
 | **VideoMatte240K** | 動画のマット（グリーンバック） | 484本 | BackgroundMattingV2 のコードは MIT だが、データのライセンスは明記されていない | 評価のみ可（要確認） | ⚠️ |
-| **HaGRID**（手） | 手のジェスチャー（bbox。マスクではない） | 55万枚 | CC BY-SA 4.0 の独自版（EasyPortrait と同じ作者）。v2 は非商用研究に限る | 手の評価用の補助として保留 | ✅ README |
+| **HaGRID**（手） | 手のジェスチャー（bbox。マスクではない）。v1 は FullHD の自撮りに近い画像、18クラス（`peace` を含む） | v1: 552,992枚（716GB）。各クラス100枚の subsample が 2.5GB | CC BY-SA 4.0 を書き直した独自ライセンス（"not a Creative Commons license"）。EasyPortrait と同じ作者・同じ形式。商用の禁止はない。派生物は BY-SA 互換のライセンスで出す | 指の評価用（#12） | ✅ [license/en_us.pdf](https://github.com/hukenovs/hagrid/blob/Hagrid_v1/license/en_us.pdf)（2026-11-25 23:17 に確認） |
 | **EgoHands**（手） | 一人称視点の手のマスク | 4,800枚 | ミラーでは CC BY 4.0 と表示 | 保留（要確認） | ⚠️ |
 | DAVIS 2017（ちらつきの評価） | 動画の物体マスク | 150本 | 今回は確かめられなかった | 保留（要確認） | — |
 | LIP / CelebAMask-HQ / SA-1B など | — | — | 研究用途に限る | 使わない（学習）。必要なら評価だけ | 記憶ベース。使う段で確認する |
@@ -54,3 +54,10 @@
 - PP-HumanSeg: https://github.com/PaddlePaddle/PaddleSeg/tree/release/2.8/contrib/PP-HumanSeg
 - BackgroundMattingV2: https://github.com/PeterL1n/BackgroundMattingV2
 - MediaPipe モデル: `https://storage.googleapis.com/mediapipe-models/image_segmenter/<name>/...` から HTTP 200 で取得できることを確認（multiclass float32 は約16MB、landscape float16 は約250KB）
+
+## HaGRID のライセンスの確認（2026-11-25 23:17）
+
+- `Hagrid_v1` ブランチと `master` ブランチの `license/en_us.pdf` は、SHA-256 が同じ（`14f4845e…4d22`）。同じライセンスの文書
+- 文書は CC BY-SA 4.0 の書き直しで、非商用の制限は無い。条件は、出典の表示、変更したことの表示、派生物を同じ条件か BY-SA 互換のライセンスで出すこと
+- `Hagrid_v2` の README も、同じ PDF を指している。#1 のコメントにある「v2 は非商用研究に限る」は、この README と PDF からは確かめられなかった。v1 を使う方針は変えない
+- 配布元のストレージ（sbercloud）は、この日の確認では HTTP 502 を返した。取得は次の回で試す
