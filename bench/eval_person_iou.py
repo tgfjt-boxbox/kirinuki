@@ -24,7 +24,6 @@ BOUNDARY_TOLERANCE = 0.008
 
 
 def dilate(mask, r):
-    """Square dilation of radius r, done separably along each axis."""
     for axis in (0, 1):
         n = mask.shape[axis]
         padded = np.pad(mask, [(r, r) if a == axis else (0, 0) for a in (0, 1)])
@@ -42,7 +41,6 @@ def boundary(mask):
 
 
 def boundary_f(pred, gt):
-    """DAVIS-style boundary F-measure; tolerance is BOUNDARY_TOLERANCE of the image diagonal."""
     r = max(1, round(BOUNDARY_TOLERANCE * np.hypot(*gt.shape)))
     bp, bg = boundary(pred), boundary(gt)
     if not bp.any() or not bg.any():

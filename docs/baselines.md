@@ -46,7 +46,7 @@
 | selfie_segmenter（square） | 97.75% | 97.68% | 89.90% |
 | selfie_segmenter_landscape | 97.26% | 97.01% | 84.40% |
 
-- Boundary F（DAVIS と同じ定義、許容幅は画像の対角の 0.8%）: multiclass 86.00%、square 84.26%、landscape 81.69%。IoU より伸びしろが大きい
+- Boundary F（DAVIS の境界 F 値に近い定義。境界の膨張は正方形、許容幅は画像の対角の 0.8% を四捨五入。DAVIS 公式は円盤と切り上げなので、数値はそのままは比べられない）: multiclass 86.00%、square 84.26%、landscape 81.69%。IoU より伸びしろが大きい
 - 全画素を person とする自明な予測は 49.81%。測定は本物
 - multiclass − square は平均 +0.54 ポイント（標準誤差 0.30）、24枚中23枚で multiclass が上
 - **伸びしろが小さい**: 基準がすでに 98% 付近にある。MediaPipe 自身のカードでは注釈者どうしの一致が 98.74%。EasyPortrait の mIoU だけをメイン指標にすると、改善が数字に出にくい（推論）
