@@ -1,0 +1,45 @@
+name: bench
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: bench
+      MPLCONFIGDIR: /tmp/mpl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.15"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - uses: actions/cache@v4
+        with:
+          path: models
+          key: models-${{ hashFiles('scripts/fetch_models.sh') }}
+      - run: scripts/fetch_models.sh
+      - name: cutout sheet on the public material
+        run: python bench/cutout.py out bench/materials/public/office-peace.png && test -s out/office-peace.png
+      - name: multiclass keeps all five fingers on the public material
+        run: |
+          python bench/finger_core.py out bench/materials/public/office-peace.png > out/fingers.jsonl
+          python - <<'PY'
+          import json
+          rows = [json.loads(line) for line in open("out/fingers.jsonl")]
+          assert len(rows) == 5, f"expected 5 fingers, got {len(rows)}"
+          kept = [r["finger"] for r in rows if r["kept"]["selfie_multiclass_256x256"]]
+          assert len(kept) == 5, f"multiclass kept only {kept}"
+          print("multiclass kept", kept)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench-out
+          path: out/
