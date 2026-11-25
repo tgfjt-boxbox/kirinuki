@@ -36,6 +36,8 @@ class Run:
 def load_run(ref):
     path, model = ref.rsplit(":", 1)
     data = json.loads(Path(path).read_text())
+    if model not in data["models"]:
+        raise ValueError(f"{model} not in {path}: {', '.join(data['models'])}")
     per_model = data["models"][model]
     return Run(ref, model, data["threshold"], {m: per_model[key] for m, key in METRICS.items()})
 
@@ -132,6 +134,7 @@ def main():
     refs = f"<code>{html.escape(before.ref)}</code> → <code>{html.escape(after.ref)}</code>"
     head = ("<tr><th>metric</th><th>before</th><th>after</th><th>diff (pt)</th><th>paired SE (pt)</th>"
             "<th>better / worse</th><th>n</th></tr>")
+    args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(f"""<!doctype html><meta charset="utf-8"><title>compare</title>
 <style>body{{font-family:sans-serif;margin:2em}}table{{border-collapse:collapse;margin-bottom:2em}}
 td,th{{border:1px solid #ccc;padding:4px 8px;vertical-align:top}}img{{display:block}}</style>
