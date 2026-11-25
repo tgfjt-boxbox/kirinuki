@@ -2,7 +2,9 @@
 
 usage: .venv/bin/python bench/cutout.py OUT_DIR IMAGE...
 Each image is center-cropped to 4:3 and resized to 640x480, matching the production pipeline.
-Columns: input, confidence mask, mask overlay, composite on a flat background (soft alpha = confidence).
+Columns: input, confidence mask, mask overlay, composite on a flat background.
+The overlay and the composite use alpha = smoothstep(0.2, 0.8) of the confidence, because multiclass never drops
+below about 0.08 on the background and raw alpha lets the old room show through (eval_soft_alpha.py).
 """
 import sys
 from pathlib import Path
@@ -12,10 +14,12 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 from eval_person_iou import MODELS, segmenter
+from eval_soft_alpha import smoothstep
 
 SIZE = (640, 480)
 BACKGROUND = np.array([40, 110, 220], dtype=np.float32)
 OVERLAY = np.array([255, 40, 40], dtype=np.float32)
+ALPHA = smoothstep(0.2, 0.8)
 
 
 def to_640x480(img):
@@ -31,7 +35,7 @@ def to_640x480(img):
 
 
 def panels(rgb, prob):
-    a = prob[..., None]
+    a = ALPHA(prob)[..., None]
     mask = np.repeat(prob[..., None] * 255, 3, axis=2)
     overlay = rgb * (1 - 0.45 * a) + OVERLAY * 0.45 * a
     composite = rgb * a + BACKGROUND * (1 - a)
