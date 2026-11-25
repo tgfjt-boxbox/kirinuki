@@ -21,7 +21,7 @@
 | **PPM-100** | ポートレートのマット（評価用） | 100枚 | マットは CC BY-NC-SA 4.0 | 評価のみ可 | ⚠️ |
 | **PP-HumanSeg14K** | ビデオ会議の映像から切り出したもの | 約1.4万枚 | データ自体のライセンスが見つからない（ローダーのコードは Apache 2.0） | 評価のみ可（要確認） | ⚠️ |
 | **VideoMatte240K** | 動画のマット（グリーンバック） | 484本 | BackgroundMattingV2 のコードは MIT だが、データのライセンスは明記されていない | 評価のみ可（要確認） | ⚠️ |
-| **HaGRID**（手） | 手のジェスチャー（bbox。マスクではない）。v1 は FullHD の自撮りに近い画像、18クラス（`peace` を含む） | v1: 552,992枚（716GB）。各クラス100枚の subsample が 2.5GB | CC BY-SA 4.0 を書き直した独自ライセンス（"not a Creative Commons license"）。EasyPortrait と同じ作者・同じ形式。商用の禁止はない。派生物は BY-SA 互換のライセンスで出す | 指の評価用（#12） | ✅ [license/en_us.pdf](https://github.com/hukenovs/hagrid/blob/Hagrid_v1/license/en_us.pdf)（2026-11-25 23:17 に確認） |
+| **HaGRID**（手） | 手のジェスチャー（bbox。マスクではない）。v1 は FullHD、主に屋内でカメラから 0.5〜4m の距離で撮った画像、18クラス（`peace` を含む） | v1: 552,992枚（716GB）。各クラス100枚の subsample が 2.5GB | CC BY-SA 4.0 を書き直した独自ライセンス（"not a Creative Commons license"）。EasyPortrait と同じ GitHub アカウント（hukenovs）が配布し、同じ形式の文書。商用の禁止はない。派生物は BY-SA 互換のライセンスで出す | 指の評価用（#12） | ✅ [license/en_us.pdf](https://github.com/hukenovs/hagrid/blob/Hagrid_v1/license/en_us.pdf)（2026-11-25 23:17 に確認） |
 | **EgoHands**（手） | 一人称視点の手のマスク | 4,800枚 | ミラーでは CC BY 4.0 と表示 | 保留（要確認） | ⚠️ |
 | DAVIS 2017（ちらつきの評価） | 動画の物体マスク | 150本 | 今回は確かめられなかった | 保留（要確認） | — |
 | LIP / CelebAMask-HQ / SA-1B など | — | — | 研究用途に限る | 使わない（学習）。必要なら評価だけ | 記憶ベース。使う段で確認する |
