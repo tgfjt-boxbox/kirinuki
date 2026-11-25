@@ -27,6 +27,9 @@ scripts/fetch_models.sh
 
 # 比較画像（入力、確信度マスク、重ね合わせ、背景差し替え）をモデルごとに並べる
 PYTHONPATH=bench .venv/bin/python bench/cutout.py out/ bench/materials/public/office-peace.png
+
+# 指が残るかどうか（指の芯の再現率）を指ごとに測る。定義は docs/finger-metric.md
+PYTHONPATH=bench .venv/bin/python bench/finger_core.py out/ bench/materials/public/office-peace.png
 ```
 
 データセットの取得と評価の方法は [docs/datasets.md](docs/datasets.md) と各スクリプトの冒頭にある。
