@@ -90,8 +90,9 @@ def main():
         for name in sys.argv[4:]:
             dest = os.path.join(outdir, name)
             os.makedirs(os.path.dirname(dest), exist_ok=True)
-            with open(dest, "wb") as f:
+            with open(dest + ".part", "wb") as f:
                 f.write(zf.read(name))
+            os.replace(dest + ".part", dest)
             print(dest)
     else:
         sys.exit(__doc__)

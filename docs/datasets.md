@@ -61,3 +61,11 @@
 - 文書は CC BY-SA 4.0 の書き直しで、非商用の制限は無い。条件は、出典の表示、変更したことの表示、派生物を同じ条件か BY-SA 互換のライセンスで出すこと
 - `Hagrid_v2` の README も、同じ PDF を指している。#1 のコメントにある「v2 は非商用研究に限る」は、この README と PDF からは確かめられなかった。v1 を使う方針は変えない
 - 配布元のストレージ（sbercloud）は、この日の確認では HTTP 502 を返した。取得は次の回で試す
+
+## HaGRID の取得元（2026-11-26 09:05）
+
+- v1 の README にある取得先（`n-usr-2uzac.s3pd12.sbercloud.ru` と `n-ws-620xz-pd11.s3pd11.sbercloud.ru`）は、プロキシの CONNECT が 502 で失敗した。前日と同じ結果
+- いまの README が指す取得先（`rndml-team-cv.obs.ru-moscow-1.hc.sbercloud.ru`）は応答する。HTTP Range も使える
+- ここにあるジェスチャー別の zip（`hagrid_dataset_new_554800/`）は、v1（552,992枚、2022年）ではなく **HaGRID 2.0**（554,800枚、2023年、ブランチ `Hagrid_v2`）。`Hagrid_v2` の README も、v1 と同じライセンス PDF を指す。非商用の制限は、どの README と PDF にも見当たらない
+- そこで、手元の評価には HaGRID 2.0 を使う。画像は git に入れず、`data/hagrid/` に置く。1M 枚の HaGRIDv2（2024年）は使わない
+- 取得は `scripts/fetch_hagrid.sh`。クラスの zip（約40GB）から、名前順の先頭 N 枚だけを Range で読む。名前は UUID なので、並べて先頭を取るだけで再現できる無作為抽出になる
