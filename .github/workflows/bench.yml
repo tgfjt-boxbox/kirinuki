@@ -44,6 +44,8 @@ jobs:
           key: venv-${{ runner.os }}-${{ steps.py.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
       - if: steps.venv.outputs.cache-hit != 'true'
         run: python -m venv .venv && .venv/bin/pip install -r requirements.txt
+      - name: libEGL for the mediapipe shared library
+        run: sudo apt-get install -y --no-install-recommends libegl1 libgles2
       - name: cutout sheet on the public material
         run: .venv/bin/python bench/cutout.py out bench/materials/public/office-peace.png && test -s out/office-peace.png
       - name: multiclass keeps all five fingers on the public material
