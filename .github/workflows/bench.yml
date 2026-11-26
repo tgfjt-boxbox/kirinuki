@@ -1,0 +1,68 @@
+name: bench
+
+on:
+  pull_request:
+    paths:
+      - "bench/**"
+      - "scripts/**"
+      - "requirements.txt"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONPATH: bench
+      MPLCONFIGDIR: /tmp/mpl
+    steps:
+      - uses: actions/checkout@v4
+      - id: py
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.15"
+      - name: scripts compile
+        run: python -m py_compile bench/*.py
+      - id: models
+        uses: actions/cache@v4
+        with:
+          path: models
+          key: models-${{ hashFiles('scripts/fetch_models.sh') }}
+      - name: fetch models on a cache miss, verify SHA-256 every run
+        run: scripts/fetch_models.sh
+      - id: venv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.py.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
+      - if: steps.venv.outputs.cache-hit != 'true'
+        run: python -m venv .venv && .venv/bin/pip install -r requirements.txt
+      - name: libEGL for the mediapipe shared library
+        run: sudo apt-get install -y --no-install-recommends libegl1 libgles2
+      - name: cutout sheet on the public material
+        run: .venv/bin/python bench/cutout.py out bench/materials/public/office-peace.png && test -s out/office-peace.png
+      - name: multiclass keeps all five fingers on the public material
+        run: |
+          .venv/bin/python bench/finger_core.py out bench/materials/public/office-peace.png > out/fingers.jsonl
+          .venv/bin/python - <<'PY'
+          import json
+          rows = [json.loads(line) for line in open("out/fingers.jsonl")]
+          assert len(rows) == 5, f"expected 5 fingers, got {len(rows)}"
+          kept = [r["finger"] for r in rows if r["kept"]["selfie_multiclass_256x256"]]
+          assert len(kept) == 5, f"multiclass kept only {kept}"
+          print("multiclass kept", kept)
+          PY
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-out
+          path: out/
+          retention-days: 7
+          if-no-files-found: ignore
