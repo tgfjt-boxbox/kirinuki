@@ -129,7 +129,10 @@ def load_fingers(ref):
             r = json.loads(line)
             if model not in r["kept"]:
                 raise ValueError(f"{model} not in {f}")
-            fingers[(r["image"], r["hand"], r["finger"])] = (r["kept"][model], r["recall"][model], r["core_px"])
+            key = (r["image"], r["hand"], r["finger"])
+            if key in fingers:
+                raise ValueError(f"{key} appears twice under {path}")
+            fingers[key] = (r["kept"][model], r["recall"][model], r["core_px"])
             tags[r["image"]] = tag
     if not fingers:
         raise ValueError(f"no fingers in {path}")
