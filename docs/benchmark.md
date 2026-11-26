@@ -70,6 +70,8 @@
 
 今あるのは `bench/compare.py`。`eval_person_iou.py` の結果 JSON とモデル名の組を1つのランとして、指標の表と、person IoU の改善・悪化が大きい画像の誤差マップを出す。タグごとの表と速さの表はまだない。誤差マップは推論し直して描くので、結果 JSON と数字が合わない画像には印を付ける。
 
+`--fingers BEFORE.jsonl:MODEL AFTER.jsonl:MODEL` を付けると、`finger_core.py` の出力から指の生存率の表も足す（#3）。指は（画像、手、指）の組で対応を取り、指の種類ごとの生存率と、全画素で集計した指の芯の再現率を並べる。対応を取った差の標準誤差は、`finger_summary.py` と同じく画像を単位にする。「kept now / lost now」は、前は消えていて後で残った指と、その逆の数。
+
 ## 4. 履歴
 
 `bench/results/index.json` に全ランを並べ、メイン指標の推移をグラフで見られるようにする。各ランは、Hillclimb の判断記録（仮説、結果、採用したかどうか）とつなげる。

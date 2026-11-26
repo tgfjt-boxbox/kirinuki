@@ -1,7 +1,10 @@
 """Compare two benchmark runs as one self-contained HTML page (paired per-image diffs and error maps).
 
 usage: .venv/bin/python bench/compare.py BEFORE.json:MODEL AFTER.json:MODEL --data DATA_DIR OUT_HTML [--top 6]
+         [--fingers BEFORE.jsonl:MODEL AFTER.jsonl:MODEL]
 A run is a result JSON from eval_person_iou.py plus a model name in it.
+--fingers adds finger survival (docs/finger-metric.md) from finger_core.py output, paired per finger
+(image, hand, finger); the paired SE treats the image as the sampling unit, as in finger_summary.py.
 Only the top-K improved and top-K regressed images (by person_iou) are re-segmented to draw error maps:
 red = kept but not person (pred & ~gt), blue = person cut away (gt & ~pred), the rest is the dimmed input.
 DATA_DIR holds images/<id>.jpg and test/<id>.png (every class > 0 is person).
@@ -11,6 +14,7 @@ import base64
 import html
 import io
 import json
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -102,6 +106,57 @@ def image_rows(ids, b, a, before, after, data, segs):
     return "".join(rows)
 
 
+def load_fingers(ref):
+    path, model = ref.rsplit(":", 1)
+    rows = [json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()]
+    if not rows or model not in rows[0]["kept"]:
+        raise ValueError(f"{model} not in {path}")
+    return ref, {(r["image"], r["hand"], r["finger"]): (r["kept"][model], r["recall"][model], r["core_px"]) for r in rows}
+
+
+def clustered_paired_se(keys, d):
+    per_image = defaultdict(lambda: [0.0, 0])
+    for k, v in zip(keys, d):
+        per_image[k[0]][0] += v
+        per_image[k[0]][1] += 1
+    g = len(per_image)
+    if g < 2:
+        return float("nan")
+    mean = d.mean()
+    resid = sum((s - mean * n) ** 2 for s, n in per_image.values())
+    return np.sqrt(g / (g - 1) * resid) / len(d)
+
+
+def finger_section(before, after):
+    (bref, b), (aref, a) = before, after
+    keys = sorted(b.keys() & a.keys())
+    kb = np.array([b[k][0] for k in keys], dtype=float)
+    ka = np.array([a[k][0] for k in keys], dtype=float)
+    pb = np.array([b[k][2] for k in keys], dtype=float)
+    pa = np.array([a[k][2] for k in keys], dtype=float)
+    rb = np.array([b[k][1] for k in keys])
+    ra = np.array([a[k][1] for k in keys])
+    rows = [("finger survival (all)", keys, kb, ka)]
+    for f in ("thumb", "index", "middle", "ring", "pinky"):
+        sel = [i for i, k in enumerate(keys) if k[2] == f]
+        if sel:
+            rows.append((f"finger survival ({f})", [keys[i] for i in sel], kb[sel], ka[sel]))
+    cells = []
+    for name, ks, vb, va in rows:
+        d = va - vb
+        cells.append([name, f"{vb.mean():.2%}", f"{va.mean():.2%}", f"{d.mean() * 100:+.2f}",
+                      f"{clustered_paired_se(ks, d) * 100:.2f}", f"{int((d > 0).sum())} / {int((d < 0).sum())}", str(len(d))])
+    pooled_b, pooled_a = (rb * pb).sum() / pb.sum(), (ra * pa).sum() / pa.sum()
+    cells.append(["finger-core recall (pooled)", f"{pooled_b:.2%}", f"{pooled_a:.2%}",
+                  f"{(pooled_a - pooled_b) * 100:+.2f}", "", "", str(len(keys))])
+    body = "".join("<tr>" + "".join(f"<td>{c}</td>" for c in row) + "</tr>" for row in cells)
+    head = ("<tr><th>metric</th><th>before</th><th>after</th><th>diff (pt)</th><th>paired SE (pt, by image)</th>"
+            "<th>kept now / lost now</th><th>fingers</th></tr>")
+    images = len({k[0] for k in keys})
+    return (f"<h2>Fingers</h2><p><code>{html.escape(bref)}</code> → <code>{html.escape(aref)}</code>, "
+            f"{images} images. Unmatched fingers: {len(b.keys() ^ a.keys())}.</p><table>{head}{body}</table>")
+
+
 def section(title, rows):
     head = f"<tr><th>id / {RANK_BY}</th><th>input</th><th>before</th><th>after</th></tr>"
     body = rows or '<tr><td colspan="4">none</td></tr>'
@@ -115,6 +170,7 @@ def main():
     p.add_argument("out", type=Path)
     p.add_argument("--data", type=Path, required=True)
     p.add_argument("--top", type=int, default=6)
+    p.add_argument("--fingers", nargs=2, type=load_fingers, metavar=("BEFORE.jsonl:MODEL", "AFTER.jsonl:MODEL"))
     args = p.parse_args()
     before, after = args.before, args.after
 
@@ -141,6 +197,7 @@ td,th{{border:1px solid #ccc;padding:4px 8px;vertical-align:top}}img{{display:bl
 <h1>{refs}</h1>
 <p>Error maps: red = kept but not person, blue = person cut away. Threshold {before.threshold} / {after.threshold}.</p>
 <table>{head}{table}</table>
+{finger_section(*args.fingers) if args.fingers else ""}
 {"".join(sections)}
 """)
 
