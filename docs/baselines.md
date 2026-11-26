@@ -8,9 +8,11 @@
 | --- | --- | --- |
 | `selfie_multiclass_256x256` | Apache License 2.0 | Google のモデルカード「Mediapipe Multiclass Segmentation」（2023-05-10、Adel Ahmadyan） |
 | `selfie_segmenter_landscape` / `selfie_segmenter` | Apache License 2.0 | Google のモデルカード「MediaPipe Selfie Segmentation」（2021-05-06、Tingbo Hou ほか） |
+| `hand_landmarker.task`（指の芯を作る。比較の対象ではない） | Apache License 2.0 | Google のモデルカード「Hand Tracking (Lite/Full) with Fairness」（2021年10月）の2ページ目 |
 
 - MediaPipe 公式ガイド（ai.google.dev の Image Segmenter、2026-11-20 更新）の「Model card」リンクは、Hugging Face の `litert-community/MediaPipe-ImageSegmenter-*` に移っている。各リポジトリに上流の Google のモデルカード PDF が置かれ、README の SHA-256 と取得した PDF の SHA-256 が一致した
-- PDF の写しは `research/modelcards/`（multiclass.pdf、selfie.pdf）。Apache 2.0 なので、比較の基準として測る・推論結果を公開するのに支障はない（推論。条文の個別確認はしていない）
+- HandLandmarker も同じく `litert-community/MediaPipe-HandLandmarker-Full` に上流の PDF がある。README の `hand_landmarker.task` の SHA-256 は、`scripts/fetch_models.sh` で取ったファイルと一致した（2026-11-26 確認）
+- PDF の写しは `research/modelcards/`（multiclass.pdf、selfie.pdf、hand.pdf）。Apache 2.0 なので、比較の基準として測る・推論結果を公開するのに支障はない（推論。条文の個別確認はしていない）
 
 ## モデルカードから分かること
 
