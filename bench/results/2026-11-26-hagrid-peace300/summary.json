@@ -4,7 +4,7 @@
   "selfie_multiclass_256x256": {
    "fingers": 1479,
    "survival": 0.896551724137931,
-   "survival_se": 0.007918906522749684,
+   "survival_se": 0.012351307701953088,
    "core_recall": 0.9026775441899383,
    "survival_by_finger": {
     "index": 0.831081081081081,
@@ -17,7 +17,7 @@
   "selfie_segmenter": {
    "fingers": 1479,
    "survival": 0.651791751183232,
-   "survival_se": 0.012387676930649776,
+   "survival_se": 0.023279853109472212,
    "core_recall": 0.741524672241852,
    "survival_by_finger": {
     "index": 0.5472972972972973,
@@ -30,7 +30,7 @@
   "selfie_segmenter_landscape": {
    "fingers": 1479,
    "survival": 0.6741041244083841,
-   "survival_se": 0.012187618104737705,
+   "survival_se": 0.022273696759051387,
    "core_recall": 0.6950223507637459,
    "survival_by_finger": {
     "index": 0.5844594594594594,
