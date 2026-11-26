@@ -20,7 +20,7 @@
 | EasyPortrait | 人物 IoU の評価。学習の候補 | CC BY-SA 4.0 を書き直した独自の文書 | 文書に "commercial" の語はなく、制限もない。論文（arXiv 2304.13509v3）にもライセンスと商用の記述はない | 出典の表示、変更の表示。改変物は同じ条件か BY-SA 互換のライセンスで出す | 使う（重みの扱いは下の論点1） | [license/en_us.pdf](https://github.com/hukenovs/easyportrait/blob/master/license/en_us.pdf)、https://arxiv.org/abs/2304.13509 |
 | Open Images V7 | 手の領域の補助評価 | アノテーションは CC BY 4.0、画像は CC BY 2.0 として登録 | どちらも商用を許す。画像のライセンスは1枚ずつ利用者が確かめる | 出典の表示 | 使う | [factsfigures_v7](https://storage.googleapis.com/openimages/web/factsfigures_v7.html) |
 | HaGRID v1 | 指の生存率の評価 | EasyPortrait と同じ形式の独自の文書（BY-SA 相当） | 文書に "commercial" の語はなく、制限もない。論文（arXiv 2206.08219）にもライセンスと商用の記述はない | EasyPortrait と同じ | 使う | [license/en_us.pdf](https://github.com/hukenovs/hagrid/blob/Hagrid_v1/license/en_us.pdf)、https://arxiv.org/abs/2206.08219 |
-| HaGRID v1 の 384p ミラー（`cj-mills/hagrid-sample-30k-384p`） | HaGRID v1 の取得経路 | CC BY-SA 4.0 と表示 | 元の v1 と同じ条件で再配布したもの。v1 の配布元は今日も応答しない | v1 と同じ | 使う | https://huggingface.co/datasets/cj-mills/hagrid-sample-30k-384p |
+| HaGRID v1 の 384p ミラー（`cj-mills/hagrid-sample-30k-384p`） | HaGRID v1 の取得経路 | CC BY-SA 4.0 と表示 | ミラーの README は `cc-by-sa-4.0` と表示するだけ。元の v1 の文書は BY-SA 相当の独自の文書なので、厳しい方として元の文書の条件に従う。v1 の配布元は今日も応答しない | v1 と同じ | 使う | https://huggingface.co/datasets/cj-mills/hagrid-sample-30k-384p |
 | HaGRID 2.0 と HaGRIDv2 | なし | 文書は v1 と同じ | 論文（arXiv 2412.01508v1）に "We release the dataset under a public license for non-commercial use in research purposes" | — | **使わない**（評価にも）。厳しい方の論文に従う | https://arxiv.org/html/2412.01508v1 |
 | 公開素材 `office-peace.png` | 目で見る確認用 | ChatGPT で生成した画像 | OpenAI の利用規約に "you ... own the Output. We hereby assign to you all our right, title, and interest, if any, in and to Output" | なし | 使う | https://openai.com/policies/row-terms-of-use/（Effective: January 1, 2026） |
 
@@ -87,5 +87,5 @@
 - v1 の README にある取得先（`n-usr-2uzac.s3pd12.sbercloud.ru` と `n-ws-620xz-pd11.s3pd11.sbercloud.ru`）は、プロキシの CONNECT が 502 で失敗した。前日と同じ結果
 - いまの README が指す取得先（`rndml-team-cv.obs.ru-moscow-1.hc.sbercloud.ru`）は応答する。HTTP Range も使える
 - ここにあるジェスチャー別の zip（`hagrid_dataset_new_554800/`）は、v1（552,992枚、2022年）ではなく **HaGRID 2.0**（554,800枚、2023年、ブランチ `Hagrid_v2`）。`Hagrid_v2` の README も、v1 と同じライセンス PDF を指す。非商用の制限は、どの README と PDF にも見当たらない
-- そこで、手元の評価には HaGRID 2.0 を使う。画像は git に入れず、`data/hagrid/` に置く。1M 枚の HaGRIDv2（2024年）は使わない
-- 取得は `scripts/fetch_hagrid.sh`。クラスの zip（約40GB）から、名前順の先頭 N 枚だけを Range で読む。名前は UUID なので、並べて先頭を取るだけで再現できる無作為抽出になる
+- この回では、手元の評価に HaGRID 2.0 を使った。**#23 でこの判断を取り消した**。2.0 は論文に非商用とあるので使わず、v1 の 384p ミラーに置き換えた（上の「使っているデータとモデルの商用可否」）
+- いまの取得は `scripts/fetch_hagrid.sh`。ミラーの zip（約1GB）を丸ごと取り、名前順の先頭 N 枚を展開する。名前は UUID なので、並べて先頭を取るだけで再現できる無作為抽出になる
