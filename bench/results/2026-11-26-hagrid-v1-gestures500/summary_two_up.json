@@ -1,0 +1,44 @@
+{
+ "images": 91,
+ "models": {
+  "selfie_multiclass_256x256": {
+   "fingers": 520,
+   "survival": 0.9615384615384616,
+   "survival_se": 0.016076202290307727,
+   "core_recall": 0.9683456979188488,
+   "survival_by_finger": {
+    "index": 0.9423076923076923,
+    "middle": 0.9326923076923077,
+    "pinky": 0.9807692307692307,
+    "ring": 0.9711538461538461,
+    "thumb": 0.9807692307692307
+   }
+  },
+  "selfie_segmenter": {
+   "fingers": 520,
+   "survival": 0.7192307692307692,
+   "survival_se": 0.037796806455545964,
+   "core_recall": 0.8015791032485029,
+   "survival_by_finger": {
+    "index": 0.625,
+    "middle": 0.5961538461538461,
+    "pinky": 0.7788461538461539,
+    "ring": 0.7788461538461539,
+    "thumb": 0.8173076923076923
+   }
+  },
+  "selfie_segmenter_landscape": {
+   "fingers": 520,
+   "survival": 0.7769230769230769,
+   "survival_se": 0.03715544094186589,
+   "core_recall": 0.7937702715393006,
+   "survival_by_finger": {
+    "index": 0.7115384615384616,
+    "middle": 0.6826923076923077,
+    "pinky": 0.8269230769230769,
+    "ring": 0.8365384615384616,
+    "thumb": 0.8269230769230769
+   }
+  }
+ }
+}
