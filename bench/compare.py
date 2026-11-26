@@ -7,7 +7,7 @@ A run is a result JSON from eval_person_iou.py plus a model name in it.
 (image, hand, finger); the paired SE treats the image as the sampling unit, as in finger_summary.py.
 A --fingers path may be a directory: every fingers_<tag>.jsonl in it is read, and the table adds one row per tag.
 --latency adds the per-frame time of each run's model from bench/browser/latency.html results (pass the same file twice
-when one browser run measured both models). The pass gate (docs/finger-metric.md) is GPU_TEXTURE at p95.
+when one browser run measured both models). The pass gate (docs/finger-metric.md) is GPU_COMPOSITE at p95.
 Only the top-K improved and top-K regressed images (by person_iou) are re-segmented to draw error maps:
 red = kept but not person (pred & ~gt), blue = person cut away (gt & ~pred), the rest is the dimmed input.
 DATA_DIR holds images/<id>.jpg and test/<id>.png (every class > 0 is person).
@@ -185,7 +185,7 @@ def finger_section(before, after):
             f"{images} images. Unmatched fingers: {len(b.keys() ^ a.keys())}.</p><table>{head}{body}</table>")
 
 
-GATE_MODE, GATE_MS = "GPU_TEXTURE", 8.0
+GATE_MODE, GATE_MS = "GPU_COMPOSITE", 8.0
 
 
 def latency_rows(path, model):
