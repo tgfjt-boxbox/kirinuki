@@ -22,16 +22,17 @@ OVERLAY = np.array([255, 40, 40], dtype=np.float32)
 ALPHA = smoothstep(0.2, 0.8)
 
 
-def to_640x480(img):
-    w, h = img.size
+def crop_box(w, h):
     target = SIZE[0] / SIZE[1]
     if w / h > target:
         cw = round(h * target)
-        img = img.crop(((w - cw) // 2, 0, (w - cw) // 2 + cw, h))
-    else:
-        ch = round(w / target)
-        img = img.crop((0, (h - ch) // 2, w, (h - ch) // 2 + ch))
-    return img.resize(SIZE, Image.LANCZOS)
+        return (w - cw) // 2, 0, (w - cw) // 2 + cw, h
+    ch = round(w / target)
+    return 0, (h - ch) // 2, w, (h - ch) // 2 + ch
+
+
+def to_640x480(img):
+    return img.crop(crop_box(*img.size)).resize(SIZE, Image.LANCZOS)
 
 
 def panels(rgb, prob):
