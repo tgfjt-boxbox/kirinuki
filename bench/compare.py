@@ -185,7 +185,9 @@ def latency_section(paths, before, after):
     head = ("<tr><th>mode</th><th>input</th><th>before p50 / p95 (ms)</th><th>after p50 / p95 (ms)</th>"
             f"<th>p95 diff (ms)</th><th>gate ({GATE_MODE} p95 ≤ {GATE_MS:g} ms)</th></tr>")
     src = " → ".join(f"<code>{html.escape(str(p))}</code>" for p in paths)
-    return f"<h2>Latency</h2><p>{src}</p><table>{head}{body}</table>"
+    missing = sorted(f"{m} ({i})" for m, i in b.keys() ^ a.keys())
+    note = f"<p>Only in one file, not shown: {html.escape(', '.join(missing))}</p>" if missing else ""
+    return f"<h2>Latency</h2><p>{src}</p><table>{head}{body}</table>{note}"
 
 
 def section(title, rows):
