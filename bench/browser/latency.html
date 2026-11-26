@@ -5,10 +5,12 @@
 <script type="module">
 import { FilesetResolver, ImageSegmenter } from "./vendor/package/vision_bundle.mjs";
 
-const MODELS = ["selfie_multiclass_256x256", "selfie_segmenter", "selfie_segmenter_landscape"];
+const [hashModel, hashMode, hashInput, hashRepeat] = location.hash.slice(1).split("/");
+const MODELS = hashModel ? [hashModel] : ["selfie_multiclass_256x256", "selfie_segmenter", "selfie_segmenter_landscape"];
 const PERSON_IS_ONE_MINUS = new Set(["selfie_multiclass_256x256"]);
-const MODES = ["GPU", "GPU_TEXTURE", "GPU_COMPOSITE", "CPU"];
-const INPUTS = ["static", "moving"];
+const MODES = hashMode ? [hashMode] : ["GPU", "GPU_TEXTURE", "GPU_COMPOSITE", "CPU"];
+const INPUTS = hashInput ? [hashInput] : ["static", "moving"];
+const REPEAT = Number(hashRepeat) || 1;
 const BACKGROUND = [0, 1, 0];
 const WARMUP = 20;
 const FRAMES = 100;
@@ -182,7 +184,8 @@ async function main() {
     const img = await loadImage();
     for (const input of INPUTS)
       for (const model of MODELS)
-        for (const mode of MODES) out.results.push(await measure(fileset, img, model, mode, input));
+        for (const mode of MODES)
+          for (let k = 0; k < REPEAT; k++) out.results.push(await measure(fileset, img, model, mode, input));
   } catch (e) {
     out.error = String(e && e.stack || e);
   }
