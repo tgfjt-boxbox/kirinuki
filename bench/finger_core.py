@@ -103,8 +103,8 @@ def main():
             hands = [from_keypoints(entry, src.size) for entry in keypoints[path.name]]
         else:
             hands = [from_landmarks(lm) for lm in detector.detect(image).hand_landmarks]
-            if not hands:
-                print(f"{path.name}: no hand detected", file=sys.stderr)
+        if not hands:
+            print(f"{path.name}: no hand detected", file=sys.stderr)
         for i, hand in enumerate(hands):
             for finger, pts, r, core in cores(hand):
                 if not core.any():
