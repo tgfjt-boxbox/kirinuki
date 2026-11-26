@@ -147,3 +147,29 @@
 - 以前は HaGRID 2.0 で測っていた（multiclass 0.897 ± 0.013）。2.0 は論文に非商用とあるので外した（#23、`docs/datasets.md`）。multiclass の v1 との差（0.012）は、2つの標準誤差を合わせた値（約 0.017）より小さい。landscape は 0.674 から 0.711 に上がり、合わせた標準誤差（約 0.031）を少し超える。2.0 の結果と分析は git の履歴にある
 - 傾向は 2.0 のときと同じ。消えるのは立てた2本（人差し指と中指）で、曲げた指は手のひらの上に乗るので残りやすい
 - 伸びしろ: 基準の multiclass で 0.909。立てた2本は 0.82 / 0.80 で、メイン指標として差が出る
+
+## ブラウザでのレイテンシ（#4、2026-11-26 13:13 の実行）
+
+`@mediapipe/tasks-vision` 0.10.22-rc の `ImageSegmenter`（VIDEO モード、confidence mask）を、headless Chrome 158（Apple M5 Max、WebGPU のアダプタは `apple metal-3`）で動かした。入力は `office-peace.png` を 640×480 に収めた canvas。1つの組み合わせにつき、捨てる20フレームのあとに100フレームを測った。同じ計測を3回走らせた。結果は `bench/results/2026-11-26-browser-latency/run{1,2,3}.json`。
+
+手順（2つのコマンド。Chrome の入口はサンドボックスの外で動くので、パイプでつながない）:
+
+```
+python3 -I bench/browser/serve_latency.py OUT.json &
+agent/chrome-headless --dump-dom http://127.0.0.1:8765/bench/browser/latency.html
+```
+
+サーバーはリポジトリを配り、ページが POST した結果を OUT.json に書いて止まる。ページの `<img src="/hold">` は結果が届くまで返らないので、Chrome は計測が終わってから DOM を書き出して終了する。`--virtual-time-budget` は使わないので、時計は実時間。
+
+1フレームの時間（マスクを `getAsFloat32Array` で CPU に読み出すまで）。値は3回の p50 で、括弧は3回の p95 の範囲:
+
+| モデル | GPU（WebGPU） | CPU（WASM） |
+| --- | --- | --- |
+| selfie_multiclass_256x256 | 20.7 / 21.6 / 22.3 ms（p95 26〜31） | 131.3 / 131.4 / 131.8 ms（p95 133〜138） |
+| selfie_segmenter（square） | 3.6 / 4.7 / 4.9 ms（p95 5〜8） | 10.4 ms（3回とも。p95 10.6〜10.7） |
+| selfie_segmenter_landscape | 3.8 ms（3回とも。p95 4.5〜4.8） | 8.8 ms（3回とも。p95 9.0〜9.1） |
+
+- エラーは0。person の面積比はモデルと delegate の間で 0.480〜0.495 に収まり、どの組み合わせもマスクを出している
+- GPU では `segmentForVideo` の呼び出し自体は 0.2〜0.4 ms で返る。時間の大半は、結果を CPU に読み出すときの GPU の待ちにある（推論。読み出しを WebGL テクスチャのまま使う形との比較はまだ）
+- 合格条件の 8 ms に、基準の multiclass は GPU でも届かない（約 21 ms）。selfie の2つは GPU なら届く
+- CPU の値は1スレッドの WASM のもの。ページは cross-origin isolation をしていないので、WASM のスレッドは使えない（推論。スレッドありの計測はまだ）

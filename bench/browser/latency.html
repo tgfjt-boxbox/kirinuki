@@ -1,0 +1,77 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>kirinuki latency</title>
+<body>running<img src="/hold" alt="" hidden></body>
+<script type="module">
+import { FilesetResolver, ImageSegmenter } from "./vendor/package/vision_bundle.mjs";
+
+const MODELS = ["selfie_multiclass_256x256", "selfie_segmenter", "selfie_segmenter_landscape"];
+const PERSON_IS_ONE_MINUS = new Set(["selfie_multiclass_256x256"]);
+const DELEGATES = ["GPU", "CPU"];
+const WARMUP = 20;
+const FRAMES = 100;
+
+const pct = (xs, p) => xs.slice().sort((a, b) => a - b)[Math.min(xs.length - 1, Math.floor(p * xs.length))];
+
+async function inputCanvas() {
+  const img = new Image();
+  img.src = "../materials/public/office-peace.png";
+  await img.decode();
+  const canvas = document.createElement("canvas");
+  canvas.width = 640;
+  canvas.height = 480;
+  const ctx = canvas.getContext("2d");
+  const s = Math.max(640 / img.width, 480 / img.height);
+  ctx.drawImage(img, (640 - img.width * s) / 2, (480 - img.height * s) / 2, img.width * s, img.height * s);
+  return canvas;
+}
+
+async function measure(fileset, canvas, model, delegate) {
+  const seg = await ImageSegmenter.createFromOptions(fileset, {
+    baseOptions: { modelAssetPath: `../../models/${model}.tflite`, delegate },
+    runningMode: "VIDEO",
+    outputConfidenceMasks: true,
+    outputCategoryMask: false,
+  });
+  const call = [], withReadback = [];
+  let ts = 0, personShare = 0, errors = 0;
+  for (let i = 0; i < WARMUP + FRAMES; i++) {
+    let t1 = 0, t2 = 0;
+    const t0 = performance.now();
+    seg.segmentForVideo(canvas, (ts += 42), (result) => {
+      t1 = performance.now();
+      const masks = result.confidenceMasks;
+      if (!masks || masks.length === 0) { errors++; return; }
+      const data = masks[0].getAsFloat32Array();
+      t2 = performance.now();
+      if (i === WARMUP + FRAMES - 1) {
+        let n = 0;
+        for (const v of data) n += (PERSON_IS_ONE_MINUS.has(model) ? 1 - v : v) >= 0.5;
+        personShare = n / data.length;
+      }
+    });
+    if (i >= WARMUP) { call.push(t1 - t0); withReadback.push(t2 - t0); }
+  }
+  seg.close();
+  return { model, delegate, frames: FRAMES, errors, person_share: +personShare.toFixed(4),
+    call_ms: { p50: +pct(call, 0.5).toFixed(2), p95: +pct(call, 0.95).toFixed(2) },
+    with_readback_ms: { p50: +pct(withReadback, 0.5).toFixed(2), p95: +pct(withReadback, 0.95).toFixed(2) } };
+}
+
+async function main() {
+  const out = { userAgent: navigator.userAgent, results: [] };
+  try {
+    const adapter = navigator.gpu && (await navigator.gpu.requestAdapter());
+    out.gpu = adapter ? `${adapter.info.vendor} ${adapter.info.architecture}` : "none";
+    const fileset = await FilesetResolver.forVisionTasks("./vendor/package/wasm");
+    const canvas = await inputCanvas();
+    for (const model of MODELS)
+      for (const delegate of DELEGATES) out.results.push(await measure(fileset, canvas, model, delegate));
+  } catch (e) {
+    out.error = String(e && e.stack || e);
+  }
+  await fetch("/result", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(out) });
+  document.body.append("RESULT " + JSON.stringify(out));
+}
+main();
+</script>
