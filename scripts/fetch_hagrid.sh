@@ -9,7 +9,10 @@ class="${1:-peace}" n="${2:-300}"
 url="https://rndml-team-cv.obs.ru-moscow-1.hc.sbercloud.ru/datasets/hagrid/hagrid_dataset_new_554800/hagrid_dataset/$class.zip"
 list="data/hagrid/${class}_$n.txt"
 mkdir -p data/hagrid
-[ -f "$list" ] || python3 -I bench/remote_zip.py list "$url" "$class/*.jpg" | awk '{print $2}' | sort | head -n "$n" > "$list"
+if [ ! -f "$list" ]; then
+  python3 -I bench/remote_zip.py list "$url" "$class/*.jpg" | awk '{print $2}' | sort | sed -n "1,${n}p" > "$list.part"
+  mv "$list.part" "$list"
+fi
 while read -r name; do [ -f "data/hagrid/$name" ] || echo "$name"; done < "$list" |
   xargs -r -n 10 -P 8 python3 -I bench/remote_zip.py get "$url" data/hagrid > /dev/null
 echo "$(wc -l < "$list") listed, $(ls "data/hagrid/$class" | grep -c '\.jpg$') on disk in data/hagrid/$class"
