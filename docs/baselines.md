@@ -203,3 +203,18 @@ python3 -I bench/browser/serve_latency.py OUT.json &
 - GPU では `segmentForVideo` の呼び出し自体は 0.2〜0.4 ms で返る。時間の大半は、結果を CPU に読み出すときの GPU の待ちにある（推論。読み出しを WebGL テクスチャのまま使う形との比較はまだ）
 - 合格条件の 8 ms に、基準の multiclass は GPU でも届かない（p50 で約 21 ms）。selfie の2つは GPU の p50 なら届く。p95 では square が 8.1〜8.2 ms で少し超える。合格条件を p50 と p95 のどちらで見るかは、まだ決めていない
 - CPU の値は1スレッドの WASM のもの。ページは cross-origin isolation をしていないので、WASM のスレッドは使えない（推論。スレッドありの計測はまだ）
+
+### 読み出しをしない経路（#27、2026-11-26 13:29 の実行）
+
+実務の合成は WebGL で行うので、マスクを CPU に読み出さない経路も測った。`latency.html` の `GPU_TEXTURE` は、マスクを `getAsWebGLTexture` で受け取り、同じ WebGL2 コンテキストで1画素だけ `readPixels` して、GPU の処理が終わるのを待つ。セグメンターには自分で作った canvas を渡し、推論と待ちが同じコンテキストに乗るようにした。2回走らせた。結果は `bench/results/2026-11-26-browser-latency-texture/run{1,2}.json`（`with_readback_ms` の列が、このモードではマスクが使えるようになるまでの時間）。
+
+| モデル | GPU、マスクを CPU に読み出す | GPU、テクスチャのまま |
+| --- | --- | --- |
+| selfie_multiclass_256x256 | p50 21.4 / 23.3 ms | p50 7.9 / 7.8 ms（p95 8.1 / 8.2） |
+| selfie_segmenter（square） | p50 4.9 / 3.6 ms | p50 1.6 / 1.2 ms（p95 2.3 / 1.8） |
+| selfie_segmenter_landscape | p50 3.9 / 4.6 ms | p50 1.1 / 1.1 ms（p95 1.9 / 1.8） |
+
+- multiclass の 21 ms のうち、約 14 ms は CPU への読み出しだった。テクスチャのままなら p50 は 8 ms をわずかに下回り、p95 はわずかに上回る。基準の multiclass は、合格条件の境目にいる
+- テクスチャ経路の時間はモデルの大きさの順に並び（multiclass が selfie の約6倍）、回をまたいで揺れが小さい。1画素の `readPixels` が推論の終わりを待っていると考える根拠（推論。GPU のタイマーでの確認はまだ）
+- エラーは0。person の面積比は読み出しありと同じ
+- この時間に、WebGL での合成は入っていない
