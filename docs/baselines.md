@@ -238,7 +238,7 @@ python3 -I bench/browser/serve_latency.py OUT.json &
 | selfie_segmenter（square） | p50 4.9 / 3.6 ms | p50 1.6 / 1.2 ms（p95 2.3 / 1.8） |
 | selfie_segmenter_landscape | p50 3.9 / 4.6 ms | p50 1.1 / 1.1 ms（p95 1.9 / 1.8） |
 
-- multiclass の 21 ms のうち、約 14 ms は CPU への読み出しだった。テクスチャのままなら p50 は 8 ms をわずかに下回り、p95 はわずかに上回る。基準の multiclass は、合格条件の境目にいる
+- multiclass の 21 ms のうち、約 14 ms は CPU への読み出しだった。テクスチャのままなら p50 は 8 ms をわずかに下回り、p95 はわずかに上回る。基準の multiclass は、当時の合格条件（テクスチャのまま）の境目にいた。今の合格条件（合成込み）では p95 9.2 ms で外側にいる
 - テクスチャ経路の時間はモデルの大きさの順に並び（multiclass が selfie の約6倍）、回をまたいで揺れが小さい。1画素の `readPixels` が推論の終わりを待っていると考える根拠（推論。GPU のタイマーでの確認はまだ）
 - エラーは0。person の面積比は読み出しありと同じ
 - この時間に、WebGL での合成は入っていない
