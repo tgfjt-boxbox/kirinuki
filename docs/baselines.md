@@ -171,5 +171,5 @@ python3 -I bench/browser/serve_latency.py OUT.json &
 
 - エラーは0。person の面積比はモデルと delegate の間で 0.480〜0.495 に収まり、どの組み合わせもマスクを出している
 - GPU では `segmentForVideo` の呼び出し自体は 0.2〜0.4 ms で返る。時間の大半は、結果を CPU に読み出すときの GPU の待ちにある（推論。読み出しを WebGL テクスチャのまま使う形との比較はまだ）
-- 合格条件の 8 ms に、基準の multiclass は GPU でも届かない（約 21 ms）。selfie の2つは GPU なら届く
+- 合格条件の 8 ms に、基準の multiclass は GPU でも届かない（p50 で約 21 ms）。selfie の2つは GPU の p50 なら届く。p95 では square が 8.1〜8.2 ms で少し超える。合格条件を p50 と p95 のどちらで見るかは、まだ決めていない
 - CPU の値は1スレッドの WASM のもの。ページは cross-origin isolation をしていないので、WASM のスレッドは使えない（推論。スレッドありの計測はまだ）

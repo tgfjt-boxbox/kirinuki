@@ -1,11 +1,11 @@
 """Serve the browser latency page on 127.0.0.1 and wait for its result.
 
 usage: python3 bench/browser/serve_latency.py OUT.json [--port 8765] [--timeout 300]
-Serves the repository root, so the page loads the vendored @mediapipe/tasks-vision and models/ over http
+Serves bench/ and models/ from the repository, so the page loads the vendored @mediapipe/tasks-vision and models/ over http
 (file:// blocks the module imports). The page POSTs its result JSON to /result; the server writes it to OUT.json
 and stops. GET /hold answers only after the result arrives: the page puts it in an <img>, which keeps the load
 event pending, so `chrome --dump-dom` exits after the measurement instead of right after the first paint.
-Exits 1 if no result comes before the timeout.
+Exits 1 if no result comes before the timeout or the page reports an error.
 """
 import argparse
 import functools
@@ -16,6 +16,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+SERVED = ("/bench/", "/models/")
 PIXEL = bytes.fromhex("47494638396101000100800000000000ffffff21f90401000000002c00000000010001000002024401003b")
 
 
@@ -32,7 +33,10 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         if self.path != "/hold":
-            super().do_GET()
+            if self.path.startswith(SERVED) and ".." not in self.path:
+                super().do_GET()
+            else:
+                self.send_error(404)
             return
         self.server.done.wait(self.server.timeout_s)
         self.send_response(200)
@@ -61,6 +65,8 @@ def main():
         sys.exit(f"no result within {args.timeout:.0f} s")
     args.out.write_text(json.dumps(server.result, indent=1) + "\n")
     print(f"wrote {args.out}")
+    if "error" in server.result:
+        sys.exit(f"page error: {server.result['error']}")
 
 
 if __name__ == "__main__":
