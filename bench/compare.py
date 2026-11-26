@@ -132,7 +132,8 @@ def finger_section(before, after):
     keys = sorted(b.keys() & a.keys())
     kb = np.array([b[k][0] for k in keys], dtype=float)
     ka = np.array([a[k][0] for k in keys], dtype=float)
-    px = np.array([b[k][2] for k in keys], dtype=float)
+    pb = np.array([b[k][2] for k in keys], dtype=float)
+    pa = np.array([a[k][2] for k in keys], dtype=float)
     rb = np.array([b[k][1] for k in keys])
     ra = np.array([a[k][1] for k in keys])
     rows = [("finger survival (all)", keys, kb, ka)]
@@ -145,8 +146,9 @@ def finger_section(before, after):
         d = va - vb
         cells.append([name, f"{vb.mean():.2%}", f"{va.mean():.2%}", f"{d.mean() * 100:+.2f}",
                       f"{clustered_paired_se(ks, d) * 100:.2f}", f"{int((d > 0).sum())} / {int((d < 0).sum())}", str(len(d))])
-    cells.append(["finger-core recall (pooled)", f"{(rb * px).sum() / px.sum():.2%}", f"{(ra * px).sum() / px.sum():.2%}",
-                  f"{((ra - rb) * px).sum() / px.sum() * 100:+.2f}", "", "", str(len(keys))])
+    pooled_b, pooled_a = (rb * pb).sum() / pb.sum(), (ra * pa).sum() / pa.sum()
+    cells.append(["finger-core recall (pooled)", f"{pooled_b:.2%}", f"{pooled_a:.2%}",
+                  f"{(pooled_a - pooled_b) * 100:+.2f}", "", "", str(len(keys))])
     body = "".join("<tr>" + "".join(f"<td>{c}</td>" for c in row) + "</tr>" for row in cells)
     head = ("<tr><th>metric</th><th>before</th><th>after</th><th>diff (pt)</th><th>paired SE (pt, by image)</th>"
             "<th>kept now / lost now</th><th>fingers</th></tr>")
