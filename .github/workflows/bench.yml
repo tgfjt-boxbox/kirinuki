@@ -59,6 +59,18 @@ jobs:
           assert len(kept) == 5, f"multiclass kept only {kept}"
           print("multiclass kept", kept)
           PY
+      - name: hand-placed keypoints give the same fingers as HandLandmarker
+        run: |
+          .venv/bin/python bench/keypoints_draft.py bench/materials/public/office-peace.png > out/keypoints.json
+          .venv/bin/python bench/finger_core.py out --keypoints out/keypoints.json bench/materials/public/office-peace.png > out/fingers_manual.jsonl
+          .venv/bin/python - <<'PY'
+          import json
+          auto = [json.loads(line) for line in open("out/fingers.jsonl")]
+          manual = [json.loads(line) for line in open("out/fingers_manual.jsonl")]
+          assert {r.pop("source") for r in manual} == {"manual"}, "rows did not come from the keypoints file"
+          assert [{k: v for k, v in r.items() if k != "source"} for r in auto] == manual, "keypoints round trip changed the rows"
+          print("round trip matches", len(manual), "fingers")
+          PY
       - if: always()
         uses: actions/upload-artifact@v4
         with:
