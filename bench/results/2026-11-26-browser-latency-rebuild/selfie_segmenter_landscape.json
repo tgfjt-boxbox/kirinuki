@@ -1,0 +1,326 @@
+{
+ "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.0.0 Safari/537.36",
+ "results": [
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.2,
+    "p95": 0.3
+   },
+   "with_readback_ms": {
+    "p50": 1.1,
+    "p95": 1.9
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.2,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.2
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.2,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.1
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.1,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.2
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.2,
+    "p95": 0.3
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.1
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.1,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.1
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.1,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.1
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.2,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.1
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.1,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.2
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.2,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.2
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.1,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.1
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.1,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.2
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.1,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.2
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.1,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.1
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.1,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.1
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.1,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.2
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.2,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.2
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.1,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.1
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.2,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.2
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "mode": "GPU_TEXTURE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.1,
+    "p95": 0.2
+   },
+   "with_readback_ms": {
+    "p50": 1,
+    "p95": 1.2
+   }
+  }
+ ],
+ "gpu": "apple metal-3"
+}
