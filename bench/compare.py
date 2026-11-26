@@ -1,10 +1,12 @@
 """Compare two benchmark runs as one self-contained HTML page (paired per-image diffs and error maps).
 
 usage: .venv/bin/python bench/compare.py BEFORE.json:MODEL AFTER.json:MODEL --data DATA_DIR OUT_HTML [--top 6]
-         [--fingers BEFORE.jsonl:MODEL AFTER.jsonl:MODEL]
+         [--fingers BEFORE.jsonl:MODEL AFTER.jsonl:MODEL] [--latency BEFORE.json AFTER.json]
 A run is a result JSON from eval_person_iou.py plus a model name in it.
 --fingers adds finger survival (docs/finger-metric.md) from finger_core.py output, paired per finger
 (image, hand, finger); the paired SE treats the image as the sampling unit, as in finger_summary.py.
+--latency adds the per-frame time of each run's model from bench/browser/latency.html results (pass the same file twice
+when one browser run measured both models). The pass gate (docs/finger-metric.md) is GPU_TEXTURE at p95.
 Only the top-K improved and top-K regressed images (by person_iou) are re-segmented to draw error maps:
 red = kept but not person (pred & ~gt), blue = person cut away (gt & ~pred), the rest is the dimmed input.
 DATA_DIR holds images/<id>.jpg and test/<id>.png (every class > 0 is person).
@@ -157,6 +159,37 @@ def finger_section(before, after):
             f"{images} images. Unmatched fingers: {len(b.keys() ^ a.keys())}.</p><table>{head}{body}</table>")
 
 
+GATE_MODE, GATE_MS = "GPU_TEXTURE", 8.0
+
+
+def latency_rows(path, model):
+    data = json.loads(Path(path).read_text())
+    rows = {(r.get("mode") or r["delegate"], r.get("input", "static")): r["with_readback_ms"]
+            for r in data["results"] if r["model"] == model}
+    if not rows:
+        raise ValueError(f"{model} not in {path}")
+    return rows
+
+
+def latency_section(paths, before, after):
+    b, a = latency_rows(paths[0], before.model), latency_rows(paths[1], after.model)
+    keys = [k for k in b if k in a]
+    gate = lambda ms: "pass" if ms <= GATE_MS else "fail"
+    cells = []
+    for mode, inp in keys:
+        vb, va = b[(mode, inp)], a[(mode, inp)]
+        verdict = f"{gate(vb['p95'])} → {gate(va['p95'])}" if mode == GATE_MODE else ""
+        cells.append([mode, inp, f"{vb['p50']:g} / {vb['p95']:g}", f"{va['p50']:g} / {va['p95']:g}",
+                      f"{va['p95'] - vb['p95']:+.1f}", verdict])
+    body = "".join("<tr>" + "".join(f"<td>{c}</td>" for c in row) + "</tr>" for row in cells)
+    head = ("<tr><th>mode</th><th>input</th><th>before p50 / p95 (ms)</th><th>after p50 / p95 (ms)</th>"
+            f"<th>p95 diff (ms)</th><th>gate ({GATE_MODE} p95 ≤ {GATE_MS:g} ms)</th></tr>")
+    src = " → ".join(f"<code>{html.escape(str(p))}</code>" for p in paths)
+    missing = sorted(f"{m} ({i})" for m, i in b.keys() ^ a.keys())
+    note = f"<p>Only in one file, not shown: {html.escape(', '.join(missing))}</p>" if missing else ""
+    return f"<h2>Latency</h2><p>{src}</p><table>{head}{body}</table>{note}"
+
+
 def section(title, rows):
     head = f"<tr><th>id / {RANK_BY}</th><th>input</th><th>before</th><th>after</th></tr>"
     body = rows or '<tr><td colspan="4">none</td></tr>'
@@ -171,6 +204,7 @@ def main():
     p.add_argument("--data", type=Path, required=True)
     p.add_argument("--top", type=int, default=6)
     p.add_argument("--fingers", nargs=2, type=load_fingers, metavar=("BEFORE.jsonl:MODEL", "AFTER.jsonl:MODEL"))
+    p.add_argument("--latency", nargs=2, type=Path, metavar=("BEFORE.json", "AFTER.json"))
     args = p.parse_args()
     before, after = args.before, args.after
 
@@ -198,6 +232,7 @@ td,th{{border:1px solid #ccc;padding:4px 8px;vertical-align:top}}img{{display:bl
 <p>Error maps: red = kept but not person, blue = person cut away. Threshold {before.threshold} / {after.threshold}.</p>
 <table>{head}{table}</table>
 {finger_section(*args.fingers) if args.fingers else ""}
+{latency_section(args.latency, before, after) if args.latency else ""}
 {"".join(sections)}
 """)
 

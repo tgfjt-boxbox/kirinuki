@@ -38,6 +38,10 @@ PYTHONPATH=bench .venv/bin/python bench/compare.py "${R}:selfie_segmenter_landsc
 # 指の生存率の表も足す（finger_core.py の出力）
 F=bench/results/2026-11-26-hagrid-v1-peace300/fingers.jsonl
 PYTHONPATH=bench .venv/bin/python bench/compare.py "${R}:selfie_segmenter_landscape" "${R}:selfie_multiclass_256x256" --data data/easyportrait out/compare.html --fingers "${F}:selfie_segmenter_landscape" "${F}:selfie_multiclass_256x256"
+
+# 速さの表も足す（bench/browser/latency.html の結果。1回の計測に両方のモデルが入っていれば同じファイルを2回）
+L=bench/results/2026-11-26-browser-latency-texture/run1.json
+PYTHONPATH=bench .venv/bin/python bench/compare.py "${R}:selfie_segmenter_landscape" "${R}:selfie_multiclass_256x256" --data data/easyportrait out/compare.html --latency $L $L
 ```
 
 データセットの取得と評価の方法は [docs/datasets.md](docs/datasets.md) と各スクリプトの冒頭にある。
