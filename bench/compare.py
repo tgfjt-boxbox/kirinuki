@@ -5,6 +5,7 @@ usage: .venv/bin/python bench/compare.py BEFORE.json:MODEL AFTER.json:MODEL --da
 A run is a result JSON from eval_person_iou.py plus a model name in it.
 --fingers adds finger survival (docs/finger-metric.md) from finger_core.py output, paired per finger
 (image, hand, finger); the paired SE treats the image as the sampling unit, as in finger_summary.py.
+A --fingers path may be a directory: every fingers_<tag>.jsonl in it is read, and the table adds one row per tag.
 --latency adds the per-frame time of each run's model from bench/browser/latency.html results (pass the same file twice
 when one browser run measured both models). The pass gate (docs/finger-metric.md) is GPU_TEXTURE at p95.
 Only the top-K improved and top-K regressed images (by person_iou) are re-segmented to draw error maps:
@@ -108,12 +109,34 @@ def image_rows(ids, b, a, before, after, data, segs):
     return "".join(rows)
 
 
+@dataclass(frozen=True)
+class FingerRun:
+    ref: str
+    fingers: dict[tuple[str, int, str], tuple[bool, float, int]]
+    tags: dict[str, str]
+
+
 def load_fingers(ref):
     path, model = ref.rsplit(":", 1)
-    rows = [json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()]
-    if not rows or model not in rows[0]["kept"]:
-        raise ValueError(f"{model} not in {path}")
-    return ref, {(r["image"], r["hand"], r["finger"]): (r["kept"][model], r["recall"][model], r["core_px"]) for r in rows}
+    path = Path(path)
+    files = sorted(path.glob("fingers_*.jsonl")) if path.is_dir() else [path]
+    fingers, tags = {}, {}
+    for f in files:
+        tag = f.stem.removeprefix("fingers_") if path.is_dir() else ""
+        for line in f.read_text().splitlines():
+            if not line.strip():
+                continue
+            r = json.loads(line)
+            if model not in r["kept"]:
+                raise ValueError(f"{model} not in {f}")
+            key = (r["image"], r["hand"], r["finger"])
+            if key in fingers:
+                raise ValueError(f"{key} appears twice under {path}")
+            fingers[key] = (r["kept"][model], r["recall"][model], r["core_px"])
+            tags[r["image"]] = tag
+    if not fingers:
+        raise ValueError(f"no fingers in {path}")
+    return FingerRun(ref, fingers, tags)
 
 
 def clustered_paired_se(keys, d):
@@ -130,7 +153,7 @@ def clustered_paired_se(keys, d):
 
 
 def finger_section(before, after):
-    (bref, b), (aref, a) = before, after
+    bref, b, aref, a = before.ref, before.fingers, after.ref, after.fingers
     keys = sorted(b.keys() & a.keys())
     kb = np.array([b[k][0] for k in keys], dtype=float)
     ka = np.array([a[k][0] for k in keys], dtype=float)
@@ -143,6 +166,9 @@ def finger_section(before, after):
         sel = [i for i, k in enumerate(keys) if k[2] == f]
         if sel:
             rows.append((f"finger survival ({f})", [keys[i] for i in sel], kb[sel], ka[sel]))
+    for tag in sorted({before.tags[k[0]] for k in keys} - {""}):
+        sel = [i for i, k in enumerate(keys) if before.tags[k[0]] == tag]
+        rows.append((f"finger survival (tag {html.escape(tag)})", [keys[i] for i in sel], kb[sel], ka[sel]))
     cells = []
     for name, ks, vb, va in rows:
         d = va - vb
