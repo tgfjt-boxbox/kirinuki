@@ -7,27 +7,120 @@ import { FilesetResolver, ImageSegmenter } from "./vendor/package/vision_bundle.
 
 const MODELS = ["selfie_multiclass_256x256", "selfie_segmenter", "selfie_segmenter_landscape"];
 const PERSON_IS_ONE_MINUS = new Set(["selfie_multiclass_256x256"]);
-const MODES = ["GPU", "GPU_TEXTURE", "CPU"];
+const MODES = ["GPU", "GPU_TEXTURE", "GPU_COMPOSITE", "CPU"];
+const INPUTS = ["static", "moving"];
+const BACKGROUND = [0, 1, 0];
 const WARMUP = 20;
 const FRAMES = 100;
 
 const pct = (xs, p) => xs.slice().sort((a, b) => a - b)[Math.min(xs.length - 1, Math.floor(p * xs.length))];
 
-async function inputCanvas() {
+async function loadImage() {
   const img = new Image();
   img.src = "../materials/public/office-peace.png";
   await img.decode();
+  return img;
+}
+
+function drawFrame(ctx, img, input, i) {
+  const s = Math.max(640 / img.width, 480 / img.height) * (input === "moving" ? 1.15 : 1);
+  const dx = input === "moving" ? 40 * Math.sin(i / 7) : 0;
+  const dy = input === "moving" ? 20 * Math.cos(i / 11) : 0;
+  ctx.drawImage(img, (640 - img.width * s) / 2 + dx, (480 - img.height * s) / 2 + dy, img.width * s, img.height * s);
+}
+
+function compositor(gl, personIsOneMinus) {
+  const shader = (type, src) => {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src);
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
+    return sh;
+  };
+  const prog = gl.createProgram();
+  gl.attachShader(prog, shader(gl.VERTEX_SHADER, `#version 300 es
+    out vec2 uv;
+    void main() {
+      vec2 p = vec2(gl_VertexID & 1, gl_VertexID >> 1);
+      uv = vec2(p.x, 1.0 - p.y);
+      gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
+    }`));
+  gl.attachShader(prog, shader(gl.FRAGMENT_SHADER, `#version 300 es
+    precision highp float;
+    uniform sampler2D frame;
+    uniform highp sampler2D mask;
+    uniform bool invert;
+    uniform vec3 background;
+    in vec2 uv;
+    out vec4 color;
+    void main() {
+      ivec2 size = textureSize(mask, 0);
+      float m = texelFetch(mask, ivec2(uv * vec2(size)), 0).r;
+      float a = invert ? 1.0 - m : m;
+      color = vec4(mix(background, texture(frame, uv).rgb, a), 1.0);
+    }`));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  const vao = gl.createVertexArray();
+  const frameTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, frameTex);
+  for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR],
+    [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+  gl.bindTexture(gl.TEXTURE_2D, null);
+  const loc = (n) => gl.getUniformLocation(prog, n);
+
+  return (source, maskTex) => {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.useProgram(prog);
+    gl.bindVertexArray(vao);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, maskTex);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, frameTex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+    gl.uniform1i(loc("frame"), 0);
+    gl.uniform1i(loc("mask"), 1);
+    gl.uniform1i(loc("invert"), personIsOneMinus);
+    gl.uniform3fv(loc("background"), BACKGROUND);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.bindVertexArray(null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+  };
+}
+
+function compositedPersonShare(gl, ctx) {
+  const w = gl.drawingBufferWidth, h = gl.drawingBufferHeight;
+  const out = new Uint8Array(w * h * 4);
+  gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, out);
+  const frame = ctx.getImageData(0, 0, w, h).data;
+  const bg = BACKGROUND.map((c) => c * 255);
+  let person = 0, counted = 0;
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const o = ((h - 1 - y) * w + x) * 4, f = (y * w + x) * 4;
+      let num = 0, den = 0;
+      for (let c = 0; c < 3; c++) {
+        const d = frame[f + c] - bg[c];
+        num += (out[o + c] - bg[c]) * d;
+        den += d * d;
+      }
+      if (den < 64 * 64) continue;
+      counted++;
+      person += num / den >= 0.5;
+    }
+  return person / counted;
+}
+
+async function measure(fileset, img, model, mode, input) {
   const canvas = document.createElement("canvas");
   canvas.width = 640;
   canvas.height = 480;
   const ctx = canvas.getContext("2d");
-  const s = Math.max(640 / img.width, 480 / img.height);
-  ctx.drawImage(img, (640 - img.width * s) / 2, (480 - img.height * s) / 2, img.width * s, img.height * s);
-  return canvas;
-}
-
-async function measure(fileset, canvas, model, mode) {
   const glCanvas = document.createElement("canvas");
+  glCanvas.width = 640;
+  glCanvas.height = 480;
   const gl = mode === "CPU" ? null : glCanvas.getContext("webgl2");
   const pixel = new Uint8Array(4);
   const seg = await ImageSegmenter.createFromOptions(fileset, {
@@ -37,9 +130,13 @@ async function measure(fileset, canvas, model, mode) {
     outputConfidenceMasks: true,
     outputCategoryMask: false,
   });
+  const composite = mode === "GPU_COMPOSITE" ? compositor(gl, PERSON_IS_ONE_MINUS.has(model)) : null;
   const call = [], withReadback = [];
-  let ts = 0, personShare = 0, errors = 0;
+  let ts = 0, personShare = 0, compositedShare = null, errors = 0;
   for (let i = 0; i < WARMUP + FRAMES; i++) {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, 640, 480);
+    drawFrame(ctx, img, input, i);
     let t1 = 0, t2 = 0;
     const t0 = performance.now();
     seg.segmentForVideo(canvas, (ts += 42), (result) => {
@@ -49,11 +146,15 @@ async function measure(fileset, canvas, model, mode) {
       if (mode === "GPU_TEXTURE") {
         masks[0].getAsWebGLTexture();
         gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+      } else if (mode === "GPU_COMPOSITE") {
+        composite(canvas, masks[0].getAsWebGLTexture());
+        gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
       } else {
         masks[0].getAsFloat32Array();
       }
       t2 = performance.now();
       if (i === WARMUP + FRAMES - 1) {
+        if (composite) compositedShare = +compositedPersonShare(gl, ctx).toFixed(4);
         const data = masks[0].getAsFloat32Array();
         let n = 0;
         for (const v of data) n += (PERSON_IS_ONE_MINUS.has(model) ? 1 - v : v) >= 0.5;
@@ -63,7 +164,8 @@ async function measure(fileset, canvas, model, mode) {
     if (i >= WARMUP) { call.push(t1 - t0); withReadback.push(t2 - t0); }
   }
   seg.close();
-  return { model, mode, frames: FRAMES, errors, person_share: +personShare.toFixed(4),
+  return { model, mode, input, frames: FRAMES, errors, person_share: +personShare.toFixed(4),
+    ...(composite ? { composited_person_share: compositedShare } : {}),
     call_ms: { p50: +pct(call, 0.5).toFixed(2), p95: +pct(call, 0.95).toFixed(2) },
     with_readback_ms: { p50: +pct(withReadback, 0.5).toFixed(2), p95: +pct(withReadback, 0.95).toFixed(2) } };
 }
@@ -74,9 +176,10 @@ async function main() {
     const adapter = navigator.gpu && (await navigator.gpu.requestAdapter());
     out.gpu = adapter ? `${adapter.info.vendor} ${adapter.info.architecture}` : "none";
     const fileset = await FilesetResolver.forVisionTasks("./vendor/package/wasm");
-    const canvas = await inputCanvas();
-    for (const model of MODELS)
-      for (const mode of MODES) out.results.push(await measure(fileset, canvas, model, mode));
+    const img = await loadImage();
+    for (const input of INPUTS)
+      for (const model of MODELS)
+        for (const mode of MODES) out.results.push(await measure(fileset, img, model, mode, input));
   } catch (e) {
     out.error = String(e && e.stack || e);
   }
