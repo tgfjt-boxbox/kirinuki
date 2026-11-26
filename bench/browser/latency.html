@@ -90,13 +90,15 @@ function compositor(gl, personIsOneMinus) {
   };
 }
 
-function compositedPersonShare(gl, ctx) {
+function compositeMaskAgreement(gl, ctx, mask, personIsOneMinus) {
   const w = gl.drawingBufferWidth, h = gl.drawingBufferHeight;
   const out = new Uint8Array(w * h * 4);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, out);
+  if (gl.getError() !== gl.NO_ERROR) throw new Error("readPixels of the composite failed");
   const frame = ctx.getImageData(0, 0, w, h).data;
   const bg = BACKGROUND.map((c) => c * 255);
-  let person = 0, counted = 0;
+  let same = 0, counted = 0;
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
       const o = ((h - 1 - y) * w + x) * 4, f = (y * w + x) * 4;
@@ -107,10 +109,11 @@ function compositedPersonShare(gl, ctx) {
         den += d * d;
       }
       if (den < 64 * 64) continue;
+      const m = mask[y * w + x];
       counted++;
-      person += num / den >= 0.5;
+      same += (num / den >= 0.5) === ((personIsOneMinus ? 1 - m : m) >= 0.5);
     }
-  return person / counted;
+  return same / counted;
 }
 
 async function measure(fileset, img, model, mode, input) {
@@ -132,7 +135,7 @@ async function measure(fileset, img, model, mode, input) {
   });
   const composite = mode === "GPU_COMPOSITE" ? compositor(gl, PERSON_IS_ONE_MINUS.has(model)) : null;
   const call = [], withReadback = [];
-  let ts = 0, personShare = 0, compositedShare = null, errors = 0;
+  let ts = 0, personShare = 0, agreement = null, errors = 0;
   for (let i = 0; i < WARMUP + FRAMES; i++) {
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, 640, 480);
@@ -154,8 +157,8 @@ async function measure(fileset, img, model, mode, input) {
       }
       t2 = performance.now();
       if (i === WARMUP + FRAMES - 1) {
-        if (composite) compositedShare = +compositedPersonShare(gl, ctx).toFixed(4);
         const data = masks[0].getAsFloat32Array();
+        if (composite) agreement = +compositeMaskAgreement(gl, ctx, data, PERSON_IS_ONE_MINUS.has(model)).toFixed(4);
         let n = 0;
         for (const v of data) n += (PERSON_IS_ONE_MINUS.has(model) ? 1 - v : v) >= 0.5;
         personShare = n / data.length;
@@ -165,7 +168,7 @@ async function measure(fileset, img, model, mode, input) {
   }
   seg.close();
   return { model, mode, input, frames: FRAMES, errors, person_share: +personShare.toFixed(4),
-    ...(composite ? { composited_person_share: compositedShare } : {}),
+    ...(composite ? { composite_mask_agreement: agreement } : {}),
     call_ms: { p50: +pct(call, 0.5).toFixed(2), p95: +pct(call, 0.95).toFixed(2) },
     with_readback_ms: { p50: +pct(withReadback, 0.5).toFixed(2), p95: +pct(withReadback, 0.95).toFixed(2) } };
 }
