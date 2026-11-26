@@ -3,10 +3,30 @@
 目的: 学習と評価に使えるデータセットを、ライセンス付きで洗い出す。
 区分:
 - **学習可**: 公開するモデルの学習に使ってよい（商用利用の禁止がない）
-- **評価のみ可**: 研究・非商用に限られる、またはライセンスがはっきりしない。手元での評価や比較だけに使い、学習には入れない。評価結果を公開してよいかは個別に確かめる
+- **評価のみ可**: 研究・非商用に限られる、またはライセンスがはっきりしない。#23 の方針で、これらは評価にも使わない
 - **使わない**
 
 「確認元」が一次情報（配布元の README や規約の PDF）のものは ✅、二次情報（ミラー・検索結果）だけのものは ⚠️ とする。
+
+## 使っているデータとモデルの商用可否（#23、2026-11-26 13:00 の実行で確認）
+
+方針: 学習にも評価にも、商用で使えるものだけを使う。ライセンス文書と、作者の論文や README の記述が食い違うときは、厳しい方に従う（AGENTS.md）。
+
+| 対象 | 使い方 | ライセンス | 商用についての原文 | 表示と継承の義務 | 判断 | 出典 |
+| --- | --- | --- | --- | --- | --- | --- |
+| MediaPipe `selfie_multiclass_256x256` | 比較の基準 | Apache 2.0 | モデルカードに "LICENSED UNDER Apache License, Version 2.0"。Apache 2.0 は商用を許す | 再配布するときはライセンス文と NOTICE を付ける | 使う | `research/modelcards/multiclass.pdf` |
+| MediaPipe `selfie_segmenter`（square と landscape） | 比較の基準 | Apache 2.0 | 同上（1枚のカードに2つのモデル） | 同上 | 使う | `research/modelcards/selfie.pdf` |
+| MediaPipe HandLandmarker | 指の芯をつくる | Apache 2.0 | 同上 | 同上 | 使う | `research/modelcards/hand.pdf` |
+| EasyPortrait | 人物 IoU の評価。学習の候補 | CC BY-SA 4.0 を書き直した独自の文書 | 文書に "commercial" の語はなく、制限もない。論文（arXiv 2304.13509v3）にもライセンスと商用の記述はない | 出典の表示、変更の表示。改変物は同じ条件か BY-SA 互換のライセンスで出す | 使う（重みの扱いは下の論点1） | [license/en_us.pdf](https://github.com/hukenovs/easyportrait/blob/master/license/en_us.pdf)、https://arxiv.org/abs/2304.13509 |
+| Open Images V7 | 手の領域の補助評価 | アノテーションは CC BY 4.0、画像は CC BY 2.0 として登録 | どちらも商用を許す。画像のライセンスは1枚ずつ利用者が確かめる | 出典の表示 | 使う | [factsfigures_v7](https://storage.googleapis.com/openimages/web/factsfigures_v7.html) |
+| HaGRID v1 | 指の生存率の評価 | EasyPortrait と同じ形式の独自の文書（BY-SA 相当） | 文書に "commercial" の語はなく、制限もない。論文（arXiv 2206.08219）にもライセンスと商用の記述はない | EasyPortrait と同じ | 使う | [license/en_us.pdf](https://github.com/hukenovs/hagrid/blob/Hagrid_v1/license/en_us.pdf)、https://arxiv.org/abs/2206.08219 |
+| HaGRID v1 の 384p ミラー（`cj-mills/hagrid-sample-30k-384p`） | HaGRID v1 の取得経路 | CC BY-SA 4.0 と表示 | 元の v1 と同じ条件で再配布したもの。v1 の配布元は今日も応答しない | v1 と同じ | 使う | https://huggingface.co/datasets/cj-mills/hagrid-sample-30k-384p |
+| HaGRID 2.0 と HaGRIDv2 | なし | 文書は v1 と同じ | 論文（arXiv 2412.01508v1）に "We release the dataset under a public license for non-commercial use in research purposes" | — | **使わない**（評価にも）。厳しい方の論文に従う | https://arxiv.org/html/2412.01508v1 |
+| 公開素材 `office-peace.png` | 目で見る確認用 | ChatGPT で生成した画像 | OpenAI の利用規約に "you ... own the Output. We hereby assign to you all our right, title, and interest, if any, in and to Output" | なし | 使う | https://openai.com/policies/row-terms-of-use/（Effective: January 1, 2026） |
+
+- HaGRID 2.0 で出していた指の生存率は、v1 で測り直した（`docs/baselines.md`）。2.0 の画像を取るスクリプトは v1 に置き換えた
+- v1 のミラーは train_val 分割から取っている。v1 を学習に使う段になったら、評価に使った名前（`data/hagrid_v1/peace_300.txt`）を学習から外す
+- 商用で使えないものはベンチマークと評価のスクリプトに残っていない（`git grep` で確認）。下の候補表の「評価のみ可」は、方針が変わる前の区分。商用で使えないものは、評価にも使わない
 
 ## 候補表
 
