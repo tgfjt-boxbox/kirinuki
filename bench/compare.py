@@ -164,7 +164,8 @@ GATE_MODE, GATE_MS = "GPU_TEXTURE", 8.0
 
 def latency_rows(path, model):
     data = json.loads(Path(path).read_text())
-    rows = {(r["mode"], r.get("input", "static")): r["with_readback_ms"] for r in data["results"] if r["model"] == model}
+    rows = {(r.get("mode") or r["delegate"], r.get("input", "static")): r["with_readback_ms"]
+            for r in data["results"] if r["model"] == model}
     if not rows:
         raise ValueError(f"{model} not in {path}")
     return rows
