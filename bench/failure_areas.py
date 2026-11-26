@@ -20,7 +20,7 @@ def main():
     run = Run(result, model, d["threshold"], {})
     per = d["models"][model]["per_image"]
     segs = Segmenters()
-    out = csv.writer(sys.stdout)
+    out = csv.writer(sys.stdout, lineterminator="\n")
     out.writerow(["id", "iou", "fp_share", "fn_share"])
     for i in ids:
         rgb = np.array(Image.open(data / "images" / f"{i}.jpg").convert("RGB"))
