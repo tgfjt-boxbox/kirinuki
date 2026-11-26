@@ -152,11 +152,11 @@
 
 `@mediapipe/tasks-vision` 0.10.22-rc の `ImageSegmenter`（VIDEO モード、confidence mask）を、headless Chrome 158（Apple M5 Max、WebGPU のアダプタは `apple metal-3`）で動かした。入力は `office-peace.png` を 640×480 に収めた canvas。1つの組み合わせにつき、捨てる20フレームのあとに100フレームを測った。同じ計測を3回走らせた。結果は `bench/results/2026-11-26-browser-latency/run{1,2,3}.json`。
 
-手順（2つのコマンド。Chrome の入口はサンドボックスの外で動くので、パイプでつながない）:
+手順（2つのコマンド）:
 
 ```
 python3 -I bench/browser/serve_latency.py OUT.json &
-agent/chrome-headless --dump-dom http://127.0.0.1:8765/bench/browser/latency.html
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --dump-dom http://127.0.0.1:8765/bench/browser/latency.html
 ```
 
 サーバーはリポジトリを配り、ページが POST した結果を OUT.json に書いて止まる。ページの `<img src="/hold">` は結果が届くまで返らないので、Chrome は計測が終わってから DOM を書き出して終了する。`--virtual-time-budget` は使わないので、時計は実時間。
