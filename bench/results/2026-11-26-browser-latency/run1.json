@@ -1,0 +1,96 @@
+{
+ "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.0.0 Safari/537.36",
+ "results": [
+  {
+   "model": "selfie_multiclass_256x256",
+   "delegate": "GPU",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4806,
+   "call_ms": {
+    "p50": 0.4,
+    "p95": 0.7
+   },
+   "with_readback_ms": {
+    "p50": 22.3,
+    "p95": 27.2
+   }
+  },
+  {
+   "model": "selfie_multiclass_256x256",
+   "delegate": "CPU",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4806,
+   "call_ms": {
+    "p50": 131.8,
+    "p95": 137.6
+   },
+   "with_readback_ms": {
+    "p50": 131.8,
+    "p95": 137.6
+   }
+  },
+  {
+   "model": "selfie_segmenter",
+   "delegate": "GPU",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4804,
+   "call_ms": {
+    "p50": 0.2,
+    "p95": 0.4
+   },
+   "with_readback_ms": {
+    "p50": 3.6,
+    "p95": 5
+   }
+  },
+  {
+   "model": "selfie_segmenter",
+   "delegate": "CPU",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4819,
+   "call_ms": {
+    "p50": 10.4,
+    "p95": 10.7
+   },
+   "with_readback_ms": {
+    "p50": 10.4,
+    "p95": 10.7
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "delegate": "GPU",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4902,
+   "call_ms": {
+    "p50": 0.2,
+    "p95": 0.3
+   },
+   "with_readback_ms": {
+    "p50": 3.8,
+    "p95": 4.6
+   }
+  },
+  {
+   "model": "selfie_segmenter_landscape",
+   "delegate": "CPU",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4954,
+   "call_ms": {
+    "p50": 8.8,
+    "p95": 9.1
+   },
+   "with_readback_ms": {
+    "p50": 8.8,
+    "p95": 9.1
+   }
+  }
+ ],
+ "gpu": "apple metal-3"
+}
