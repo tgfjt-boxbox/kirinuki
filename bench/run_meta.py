@@ -38,15 +38,17 @@ def main():
     p.add_argument("out", type=Path)
     p.add_argument("--note", default="")
     args = p.parse_args()
+    models = {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted((ROOT / "models").glob("*")) if f.is_file()}
+    if not models:
+        sys.exit(f"no model files in {ROOT / 'models'}; run scripts/fetch_models.sh")
     meta = {
         "commit": git("rev-parse", "HEAD"),
         "dirty": git("diff", "--name-only", "HEAD").splitlines(),
         "created_utc": datetime.datetime.now(datetime.UTC).isoformat(timespec="seconds"),
-        "machine": {"platform": platform.platform(), "processor": platform.machine()},
+        "machine": {"platform": platform.platform(), "arch": platform.machine()},
         "python": sys.version.split()[0],
         "packages": {name: version(name) for name in PACKAGES},
-        "models": {f.name: hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted((ROOT / "models").glob("*"))
-                   if f.is_file()},
+        "models": models,
         "note": args.note,
     }
     args.out.mkdir(parents=True, exist_ok=True)
