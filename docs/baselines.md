@@ -200,13 +200,13 @@ python3 -I bench/browser/serve_latency.py OUT.json &
 | selfie_segmenter_landscape | 3.8 ms（3回とも。p95 4.5〜4.8） | 8.8 ms（3回とも。p95 9.0〜9.1） |
 
 - エラーは0。person の面積比はモデルと delegate の間で 0.480〜0.495 に収まり、どの組み合わせもマスクを出している
-- GPU では `segmentForVideo` の呼び出し自体は 0.2〜0.4 ms で返る。時間の大半は、結果を CPU に読み出すときの GPU の待ちにある（推論。読み出しを WebGL テクスチャのまま使う形との比較はまだ）
+- GPU では `segmentForVideo` の呼び出し自体は 0.2〜0.4 ms で返る。時間の大半は、結果を CPU に読み出すときの GPU の待ちにある（次の「読み出しをしない経路」で確かめた）
 - 合格条件の 8 ms に、基準の multiclass は GPU でも届かない（p50 で約 21 ms）。selfie の2つは GPU の p50 なら届く。p95 では square が 8.1〜8.2 ms で少し超える。合格条件を p50 と p95 のどちらで見るかは、まだ決めていない
 - CPU の値は1スレッドの WASM のもの。ページは cross-origin isolation をしていないので、WASM のスレッドは使えない（推論。スレッドありの計測はまだ）
 
 ### 読み出しをしない経路（#27、2026-11-26 13:29 の実行）
 
-実務の合成は WebGL で行うので、マスクを CPU に読み出さない経路も測った。`latency.html` の `GPU_TEXTURE` は、マスクを `getAsWebGLTexture` で受け取り、同じ WebGL2 コンテキストで1画素だけ `readPixels` して、GPU の処理が終わるのを待つ。セグメンターには自分で作った canvas を渡し、推論と待ちが同じコンテキストに乗るようにした。2回走らせた。結果は `bench/results/2026-11-26-browser-latency-texture/run{1,2}.json`（`with_readback_ms` の列が、このモードではマスクが使えるようになるまでの時間）。
+実務の合成は WebGL で行うので、マスクを CPU に読み出さない経路も測った。`latency.html` の `GPU_TEXTURE` は、マスクを `getAsWebGLTexture` で受け取り、同じ WebGL2 コンテキストで1画素だけ `readPixels` して、GPU の処理が終わるのを待つ。セグメンターには自分で作った canvas を渡し、推論と待ちが同じコンテキストに乗るようにした。この変更から、読み出しありの GPU も自分の canvas を渡す条件で測る。読み出しありの値は前の3回の幅に収まった。結果の JSON のキーは `delegate` から `mode` に変わった。2回走らせた。結果は `bench/results/2026-11-26-browser-latency-texture/run{1,2}.json`（`with_readback_ms` の列が、このモードではマスクが使えるようになるまでの時間）。
 
 | モデル | GPU、マスクを CPU に読み出す | GPU、テクスチャのまま |
 | --- | --- | --- |
