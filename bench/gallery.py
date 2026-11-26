@@ -2,7 +2,8 @@
 
 usage: .venv/bin/python bench/gallery.py OUT.html FINGERS.jsonl IMAGE_DIR [--worst N] [--extra IMAGE...]
 FINGERS.jsonl is finger_core.py output. The gallery shows the N images where multiclass loses the most fingers,
-then any --extra images. Each row is the input and one background-replaced composite per model, with every finger
+then any --extra images (ties keep FINGERS.jsonl order).
+Hands are re-detected with HandLandmarker, so rows from --keypoints (source: manual) may count differently. Each row is the input and one background-replaced composite per model, with every finger
 core outlined: green where the model kept the finger, red where it lost it.
 """
 import argparse
@@ -10,6 +11,7 @@ import base64
 import html
 import io
 import json
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -27,7 +29,7 @@ KEPT_COLOR, LOST_COLOR = (40, 220, 90), (255, 40, 40)
 
 def worst_images(fingers_jsonl, n):
     lost = Counter()
-    for line in fingers_jsonl.read_text().splitlines():
+    for line in filter(str.strip, fingers_jsonl.read_text().splitlines()):
         row = json.loads(line)
         lost[row["image"]] += not row["kept"][LEAD]
     return [name for name, count in lost.most_common(n) if count]
@@ -39,6 +41,8 @@ def render(path, detector, segs):
     probs = {name: np.squeeze(to_person([m.numpy_view() for m in segs[name].segment(image).confidence_masks]))
              for name, to_person in MODELS.items()}
     hands = [from_landmarks(lm) for lm in detector.detect(image).hand_landmarks]
+    if not hands:
+        print(f"{path.name}: no hand detected", file=sys.stderr)
     panels = [("input", Image.fromarray(rgb), "")]
     for name, prob in probs.items():
         a = ALPHA(prob)[..., None]
