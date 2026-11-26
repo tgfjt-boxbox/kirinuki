@@ -70,7 +70,7 @@
 
 今あるのは `bench/compare.py`。`eval_person_iou.py` の結果 JSON とモデル名の組を1つのランとして、指標の表と、person IoU の改善・悪化が大きい画像の誤差マップを出す。タグごとの表はまだない。誤差マップは推論し直して描くので、結果 JSON と数字が合わない画像には印を付ける。
 
-`--fingers BEFORE.jsonl:MODEL AFTER.jsonl:MODEL` を付けると、`finger_core.py` の出力から指の生存率の表も足す（#3）。指は（画像、手、指）の組で対応を取り、指の種類ごとの生存率と、全画素で集計した指の芯の再現率を並べる。対応を取った差の標準誤差は、`finger_summary.py` と同じく画像を単位にする。「kept now / lost now」は、前は消えていて後で残った指と、その逆の数。
+`--fingers BEFORE.jsonl:MODEL AFTER.jsonl:MODEL` を付けると、`finger_core.py` の出力から指の生存率の表も足す（#3）。指は（画像、手、指）の組で対応を取り、指の種類ごとの生存率と、全画素で集計した指の芯の再現率を並べる。対応を取った差の標準誤差は、`finger_summary.py` と同じく画像を単位にする。「kept now / lost now」は、前は消えていて後で残った指と、その逆の数。パスにフォルダを渡すと、中の `fingers_<タグ>.jsonl` をすべて読み、タグごとの行を足す（#3、#37 のジェスチャー別の結果がこの形）。
 
 `--latency BEFORE.json AFTER.json` を付けると、`bench/browser/latency.html` の結果から、それぞれのランのモデルの1フレームの時間（p50 / p95）を、モードと入力ごとに並べる（#3）。1回のブラウザ計測で両方のモデルを測ったときは、同じファイルを2回渡す。`GPU_TEXTURE` の行には、合格条件（p95 で 8 ms 以下、#28）の判定を前後で出す。
 
