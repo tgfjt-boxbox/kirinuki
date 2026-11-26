@@ -25,7 +25,7 @@
 | 公開素材 `office-peace.png` | 目で見る確認用 | ChatGPT で生成した画像 | OpenAI の利用規約に "you ... own the Output. We hereby assign to you all our right, title, and interest, if any, in and to Output" | なし | 使う | https://openai.com/policies/row-terms-of-use/（Effective: January 1, 2026） |
 
 - HaGRID 2.0 で出していた指の生存率は、v1 で測り直した（`docs/baselines.md`）。2.0 の画像を取るスクリプトは v1 に置き換えた
-- v1 のミラーは train_val 分割から取っている。v1 を学習に使う段になったら、評価に使った名前（`data/hagrid_v1/peace_300.txt`）を学習から外す
+- v1 のミラーは train_val 分割から取っている。v1 を学習に使う段になったら、評価に使った名前（`data/hagrid_v1/peace_300.txt` と、#37 の `palm_100.txt`、`one_100.txt`、`two_up_100.txt`、`ok_100.txt`、`rock_100.txt`）を学習から外す
 - 商用で使えないものはベンチマークと評価のスクリプトに残っていない（`git grep` で確認）。下の候補表の「評価のみ可」は、方針が変わる前の区分。商用で使えないものは、評価にも使わない
 
 ## 候補表
