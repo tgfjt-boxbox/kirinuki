@@ -2,7 +2,8 @@
 
 usage: .venv/bin/python bench/run_meta.py OUT_DIR [--note TEXT]
 Run it right after the evaluation, before committing, so `commit` is the code that produced the results.
-`dirty` lists tracked files changed since that commit; a non-empty list means the results came from uncommitted code.
+`dirty` lists tracked files changed since that commit (untracked files are not listed); a non-empty list means the
+results came from uncommitted code.
 """
 import argparse
 import datetime
@@ -19,7 +20,10 @@ PACKAGES = ("mediapipe", "numpy", "pillow")
 
 
 def git(*args):
-    return subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True, check=True).stdout.strip()
+    r = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True)
+    if r.returncode != 0:
+        sys.exit(f"run_meta.py needs a git checkout of the repository: git {' '.join(args)}: {r.stderr.strip()}")
+    return r.stdout.strip()
 
 
 def version(name):
