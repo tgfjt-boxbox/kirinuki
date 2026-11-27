@@ -1,5 +1,6 @@
 import { loadLiteRt, loadAndCompile, Environment } from "./vendor/litertjs/core/dist/index.js";
 import { SIZE, preprocess, infer } from "./litert_core.js";
+import { gpuSegmenter } from "./litert_gpu.js";
 import { FilesetResolver, ImageSegmenter } from "./vendor/package/vision_bundle.mjs";
 
 const [hashInput, hashRepeat, hashF16] = location.hash.slice(1).split("/");
@@ -133,26 +134,34 @@ async function main() {
     seg.close();
     preprocess(smallCtx, canvas, host);
     out.mask_agreement_vs_mediapipe = agreement(await infer(model, environment, host), mp, 640, 480);
+    const segmentOnGpu = gpuSegmenter(device, model, environment);
+    out.gpu_mask_agreement_vs_mediapipe = agreement(await segmentOnGpu(canvas), mp, 640, 480);
 
+    const PATHS = {
+      LITERT_WEBGPU_COMPOSITE: async () => {
+        preprocess(smallCtx, canvas, host);
+        return infer(model, environment, host);
+      },
+      LITERT_WEBGPU_GPUPRE_COMPOSITE: () => segmentOnGpu(canvas),
+    };
     for (const input of INPUTS)
-      for (let k = 0; k < REPEAT; k++) {
-        const pre = [], inf = [], total = [];
-        for (let i = 0; i < WARMUP + FRAMES; i++) {
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0, 0, 640, 480);
-          drawFrame(ctx, img, input, i);
-          const t0 = performance.now();
-          preprocess(smallCtx, canvas, host);
-          const t1 = performance.now();
-          const bg = await infer(model, environment, host);
-          const t2 = performance.now();
-          composite(canvas, bg);
-          gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
-          const t3 = performance.now();
-          if (i >= WARMUP) { pre.push(t1 - t0); inf.push(t2 - t1); total.push(t3 - t0); }
+      for (let k = 0; k < REPEAT; k++)
+        for (const [mode, segment] of Object.entries(PATHS)) {
+          const seg = [], total = [];
+          for (let i = 0; i < WARMUP + FRAMES; i++) {
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, 0, 640, 480);
+            drawFrame(ctx, img, input, i);
+            const t0 = performance.now();
+            const bg = await segment();
+            const t1 = performance.now();
+            composite(canvas, bg);
+            gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+            const t2 = performance.now();
+            if (i >= WARMUP) { seg.push(t1 - t0); total.push(t2 - t0); }
+          }
+          out.results.push({ mode, input, frames: FRAMES, segment_ms: stat(seg), with_readback_ms: stat(total) });
         }
-        out.results.push({ mode: "LITERT_WEBGPU_COMPOSITE", input, frames: FRAMES, preprocess_ms: stat(pre), infer_readback_ms: stat(inf), with_readback_ms: stat(total) });
-      }
     model.delete();
   } catch (e) {
     out.error = String(e && e.stack || e);

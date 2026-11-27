@@ -1,7 +1,8 @@
 import { loadLiteRt, loadAndCompile, Environment } from "./vendor/litertjs/core/dist/index.js";
 import { SIZE, preprocess, infer } from "./litert_core.js";
+import { gpuSegmenter } from "./litert_gpu.js";
 
-const [source, list, framing] = location.hash.slice(1).split("/");
+const [source, list, framing, path = "cpu"] = location.hash.slice(1).split("/");
 const SOURCES = {
   hagrid: { list: `../../data/hagrid_v1/${list}.txt`, url: (line) => `../../data/hagrid_v1/${line}` },
   ep: { list: `../../data/easyportrait/${list}.txt`, url: (id) => `../../data/easyportrait/images/${id}.jpg` },
@@ -18,9 +19,9 @@ function cropBox(w, h) {
 }
 
 async function main() {
-  const out = { userAgent: navigator.userAgent, source, list, framing, images: 0, errors: [] };
+  const out = { userAgent: navigator.userAgent, source, list, framing, path, images: 0, errors: [] };
   try {
-    if (!SOURCES[source] || !["crop43", "whole"].includes(framing)) throw new Error(`bad hash: ${location.hash}`);
+    if (!SOURCES[source] || !["crop43", "whole"].includes(framing) || !["cpu", "gpu"].includes(path)) throw new Error(`bad hash: ${location.hash}`);
     const adapter = await navigator.gpu.requestAdapter();
     const device = await adapter.requestDevice({ requiredFeatures: [...adapter.features].filter((f) => f === "shader-f16") });
     await loadLiteRt("./vendor/litertjs/core/wasm/");
@@ -32,6 +33,10 @@ async function main() {
     const maskCanvas = Object.assign(document.createElement("canvas"), { width: SIZE, height: SIZE });
     const maskCtx = maskCanvas.getContext("2d");
     const host = new Float32Array(SIZE * SIZE * 3);
+    const segment = path === "gpu" ? gpuSegmenter(device, model, environment) : async (frame) => {
+      preprocess(smallCtx, frame, host);
+      return infer(model, environment, host);
+    };
     for (const line of lines) {
       const stem = line.split("/").pop().replace(/\.[^.]+$/, "");
       try {
@@ -44,8 +49,7 @@ async function main() {
           frameCtx.drawImage(img, sx, sy, sw, sh, 0, 0, 640, 480);
           frame = frameCtx.canvas;
         }
-        preprocess(smallCtx, frame, host);
-        const bg = await infer(model, environment, host);
+        const bg = await segment(frame);
         const pixels = maskCtx.createImageData(SIZE, SIZE);
         for (let i = 0; i < bg.length; i++) {
           const v = Math.round((1 - bg[i]) * 255);
