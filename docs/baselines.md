@@ -356,3 +356,28 @@ python3 -I bench/browser/serve_latency.py OUT.json --mask-dir MASKS &
 - Boundary F だけ 0.22 ポイント下がり、標準誤差の3倍ある。縮小の方法（ブラウザの canvas と MediaPipe の違い）か、マスクを8ビットにして拡大する手順のどちらかが原因と考える（推論。切り分けていない）
 - MediaPipe の行は、前の計測（指の生存率 0.909、800枚の IoU 98.11% / 98.16%、Boundary F 87.10%）と同じ値になった。ハーネスは同じものを測っている
 - エラーは0（HaGRID 300枚、EasyPortrait 800枚のどちらもマスクを出した）
+
+### 前処理と softmax を WebGPU に移した経路（#53、2026-11-27 13:03 の実行）
+
+上の LiteRT.js の経路では、縮小と [−1, 1] への変換、softmax を CPU で行っていた。これを WebGPU のコンピュートシェーダーに移した（`bench/browser/litert_gpu.js`）。フレームを `copyExternalImageToTexture` で GPU に送り、双線形で 256×256 に縮めて入力のバッファに書く。モデルの出力のバッファで softmax をとり、CPU には背景の1チャンネル（256×256 の float）だけを読み出す。合成は今までどおり WebGL で行うので、合格条件（#28）の測り方は変わらない。
+
+`litert.html` は同じ実行の中で2つの経路を交互に測る（`LITERT_WEBGPU_COMPOSITE` が CPU の経路、`LITERT_WEBGPU_GPUPRE_COMPOSITE` が GPU の経路）。`segment_ms` はフレームを渡してからマスクが CPU に届くまで、`with_readback_ms` は合成込み。結果は `bench/results/2026-11-27-litert-gpupre/`。
+
+| 入力 | CPU の経路の合成込み p95 | GPU の経路の合成込み p95 |
+| --- | --- | --- |
+| static（100フレーム × 5回） | 5.9〜6.0 ms | 4.1 ms（5回とも） |
+| moving（100フレーム × 5回） | 5.9〜6.1 ms | 4.1 ms（5回とも） |
+
+- 合成込み p95 は 6.0 ms から 4.1 ms になった。p50 は 5.7〜5.8 ms から 3.9〜4.0 ms
+- 律速は GPU の推論そのもの。区間を分けて測った1回（報告用ではない計測）では、GPU の経路の 3.1 ms のうち、`mapAsync` で結果を待つ時間が 2.4 ms、フレームを GPU に送る時間が 0.6 ms、推論と softmax を積む時間が 0.2 ms 以下だった。残りの 0.9 ms は WebGL の合成（640×480 のフレームとマスクのアップロード、1画素の読み出しでの同期）
+- MediaPipe（GPU）とのマスクの一致は、person IoU 0.9993 から 0.9998 に上がった（画素一致は 0.9997 から 0.9999）。canvas での縮小より、GPU の双線形の縮小の方が MediaPipe に近いと考える（推論）
+- 評価セットでの精度（`litert_masks.html#…/gpu`）は落ちていない
+
+| 評価 | MediaPipe（Python） | LiteRT.js、CPU の経路（#50） | LiteRT.js、GPU の経路 |
+| --- | --- | --- | --- |
+| 指の生存率（HaGRID v1 peace 300、1,422本） | 0.909 | 0.909 | 0.909（0.9093） |
+| person IoU、画像平均（EasyPortrait 800枚） | 98.11% | 98.13% | 98.13% |
+| Boundary F | 87.10% | 86.88% | 86.96% |
+
+- エラーは0（HaGRID 300枚、EasyPortrait 800枚のどちらもマスクを出した）
+- EasyPortrait の画像は元の解像度のまま GPU で縮める。ミップマップを使わない双線形なので、大きく縮めるときに折り返しが出うるが、IoU と Boundary F には表れなかった
