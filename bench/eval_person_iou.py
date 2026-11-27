@@ -1,12 +1,14 @@
 """Person-mask IoU of MediaPipe segmenters on EasyPortrait samples (accuracy only; latency is measured in the browser).
 
-usage: .venv/bin/python bench/eval_person_iou.py SAMPLE_DIR OUT_JSON
+usage: .venv/bin/python bench/eval_person_iou.py SAMPLE_DIR OUT_JSON [--models NAME...] [--masks DIR]
 SAMPLE_DIR holds ids.txt, images/<id>.jpg and test/<id>.png (EasyPortrait: every class > 0 is person).
 Person probability: selfie_segmenter* emit it directly; multiclass emits 6 classes, so person = 1 - background.
 The image is passed whole; MediaPipe resizes to the model input and returns masks at image resolution.
+--models limits the MediaPipe models. --masks DIR adds MASKS_MODEL: person probabilities read from DIR/<id>.png
+(8-bit, resized bilinearly to the image), as bench/browser/litert_masks.html writes them from LiteRT.js.
 """
+import argparse
 import json
-import sys
 from pathlib import Path
 
 import mediapipe as mp
@@ -20,6 +22,7 @@ MODELS = {
     "selfie_segmenter_landscape": lambda masks: masks[0],
 }
 THRESHOLD = 0.5
+MASKS_MODEL = "litertjs_multiclass"
 BOUNDARY_TOLERANCE = 0.008
 
 
@@ -60,19 +63,29 @@ def segmenter(name):
 
 
 def main():
-    root, out = Path(sys.argv[1]), Path(sys.argv[2])
+    p = argparse.ArgumentParser()
+    p.add_argument("root", type=Path)
+    p.add_argument("out", type=Path)
+    p.add_argument("--models", nargs="+", choices=list(MODELS), default=list(MODELS))
+    p.add_argument("--masks", type=Path)
+    args = p.parse_args()
+    root, out = args.root, args.out
     ids = root.joinpath("ids.txt").read_text().split()
-    segs = {name: segmenter(name) for name in MODELS}
-    iou = {name: {} for name in MODELS}
-    bf = {name: {} for name in MODELS}
-    totals = {name: [0, 0] for name in MODELS}
+    segs = {name: segmenter(name) for name in args.models}
+    names = args.models + ([MASKS_MODEL] if args.masks else [])
+    iou = {name: {} for name in names}
+    bf = {name: {} for name in names}
+    totals = {name: [0, 0] for name in names}
     for i in ids:
         rgb = np.array(Image.open(root / "images" / f"{i}.jpg").convert("RGB"))
         gt = np.array(Image.open(root / "test" / f"{i}.png")) > 0
         image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
-        for name, to_person in MODELS.items():
-            res = segs[name].segment(image)
-            prob = np.squeeze(to_person([m.numpy_view() for m in res.confidence_masks]))
+        probs = {name: np.squeeze(MODELS[name]([m.numpy_view() for m in segs[name].segment(image).confidence_masks]))
+                 for name in args.models}
+        if args.masks:
+            mask = Image.open(args.masks / f"{i}.png").convert("L").resize(gt.shape[::-1], Image.BILINEAR)
+            probs[MASKS_MODEL] = np.asarray(mask) / 255.0
+        for name, prob in probs.items():
             assert prob.shape == gt.shape, f"{name} {i}: mask {prob.shape} vs gt {gt.shape}"
             pred = prob >= THRESHOLD
             a, b = int((pred & gt).sum()), int((pred | gt).sum())
@@ -83,7 +96,7 @@ def main():
     for seg in segs.values():
         seg.close()
     results = {}
-    for name in MODELS:
+    for name in names:
         ious, bfs = np.array(list(iou[name].values())), np.array(list(bf[name].values()))
         dataset_iou = totals[name][0] / totals[name][1]
         results[name] = {
