@@ -408,4 +408,4 @@ python3 -I bench/browser/serve_latency.py OUT.json --mask-dir MASKS &
 - ズームがかかった画像は HaGRID で 147 / 300、EasyPortrait で 300 / 4,000。EasyPortrait は人物が大きく写るので、ほとんどの画像で矩形が 95% を超え、1回目だけになる。IoU が動かないのはこのため
 - `litert.html` の静止画（office-peace）も人物が大きく、上限 95% のままではズームがかからない（`zoomed_frames` が0）。最悪の時間は `LITERT_WEBGPU_ZOOM_ALWAYS_COMPOSITE`（上限なし）で測った
 - Boundary F の −0.14 ポイントは、ズームなしの LiteRT.js の経路でも出ていた差（800枚で −0.14〜−0.22 ポイント）と同じ大きさで、ズームによるものではないと考える（推論。4,000枚でズームなしの経路は測っていない）
-- 矩形がフレームごとに動くことによるちらつきは、まだ測っていない
+- 矩形がフレームごとに動くことによるちらつきは、まだ測っていない（#57）
