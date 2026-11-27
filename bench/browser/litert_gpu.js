@@ -18,15 +18,13 @@ fn main(@builtin(global_invocation_id) id: vec3u) {
 
 // The model outputs logits for 6 classes; MediaPipe's confidence mask is the softmax of channel 0 (background).
 const SOFTMAX = /* wgsl */ `
-struct Params { offset: u32 }
 @group(0) @binding(0) var<storage, read> logits: array<f32>;
 @group(0) @binding(1) var<storage, read_write> bg: array<f32>;
-@group(0) @binding(2) var<uniform> params: Params;
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) id: vec3u) {
   let i = id.x;
   if (i >= ${SIZE * SIZE}u) { return; }
-  let o = params.offset + i * 6u;
+  let o = i * 6u;
   var m = logits[o];
   for (var c = 1u; c < 6u; c++) { m = max(m, logits[o + c]); }
   var t = 0.0;
@@ -40,7 +38,6 @@ export function gpuSegmenter(device, model, environment) {
   const rgb = device.createBuffer({ size: SIZE * SIZE * 3 * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC });
   const bg = device.createBuffer({ size: SIZE * SIZE * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC });
   const readback = device.createBuffer({ size: SIZE * SIZE * 4, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
-  const params = device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
 
   const prePipe = device.createComputePipeline({ layout: "auto", compute: { module: device.createShaderModule({ code: PREPROCESS }), entryPoint: "main" } });
   const sampler = device.createSampler({ magFilter: "linear", minFilter: "linear" });
@@ -63,7 +60,7 @@ export function gpuSegmenter(device, model, environment) {
     if (!smGroups.has(logits))
       smGroups.set(logits, device.createBindGroup({
         layout: smPipe.getBindGroupLayout(0),
-        entries: [{ binding: 0, resource: { buffer: logits } }, { binding: 1, resource: { buffer: bg } }, { binding: 2, resource: { buffer: params } }],
+        entries: [{ binding: 0, resource: { buffer: logits } }, { binding: 1, resource: { buffer: bg } }],
       }));
     return smGroups.get(logits);
   };
@@ -84,7 +81,6 @@ export function gpuSegmenter(device, model, environment) {
 
     const [res] = await model.run(input);
     const logits = res.toGpuBuffer();
-    device.queue.writeBuffer(params, 0, new Uint32Array([res.liteRtTensorHandle.offset() / 4]));
     enc = device.createCommandEncoder();
     pass = enc.beginComputePass();
     pass.setPipeline(smPipe);
