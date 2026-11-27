@@ -20,12 +20,12 @@ def main():
     held_out = {line for f in ROOT.glob("*_*.txt") if not f.name.startswith("train_") for line in f.read_text().split()}
     with zipfile.ZipFile(ZIP) as z:
         names = sorted(n for n in z.namelist() if n.endswith(".jpg"))
+        assert held_out <= set(names), "an evaluation list names images that are not in the zip, so it would not be left out"
         picked = []
-        for c in args.classes:
+        for c in dict.fromkeys(args.classes):
             in_class = [n for n in names if f"/train_val_{c}/" in n and n not in held_out]
             assert len(in_class) >= args.per_class, f"{c}: only {len(in_class)} images outside the evaluation lists"
             picked += in_class[: args.per_class]
-        assert not set(picked) & held_out
         for n in picked:
             if not (ROOT / n).exists():
                 z.extract(n, ROOT)
