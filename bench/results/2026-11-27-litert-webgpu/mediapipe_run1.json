@@ -1,0 +1,57 @@
+{
+ "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.0.0 Safari/537.36",
+ "results": [
+  {
+   "model": "selfie_multiclass_256x256",
+   "mode": "GPU_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4806,
+   "composite_mask_agreement": 1,
+   "call_ms": {
+    "p50": 0.4,
+    "p95": 0.6
+   },
+   "with_readback_ms": {
+    "p50": 8.9,
+    "p95": 9.2
+   }
+  },
+  {
+   "model": "selfie_multiclass_256x256",
+   "mode": "GPU_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4806,
+   "composite_mask_agreement": 1,
+   "call_ms": {
+    "p50": 0.4,
+    "p95": 0.5
+   },
+   "with_readback_ms": {
+    "p50": 8.9,
+    "p95": 9.2
+   }
+  },
+  {
+   "model": "selfie_multiclass_256x256",
+   "mode": "GPU_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "errors": 0,
+   "person_share": 0.4806,
+   "composite_mask_agreement": 1,
+   "call_ms": {
+    "p50": 0.4,
+    "p95": 0.5
+   },
+   "with_readback_ms": {
+    "p50": 8.9,
+    "p95": 9.2
+   }
+  }
+ ],
+ "gpu": "apple metal-3"
+}
