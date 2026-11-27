@@ -1,11 +1,14 @@
 """Measure whether each baseline model keeps the fingers, using finger cores built from hand keypoints.
 
-usage: .venv/bin/python bench/finger_core.py OUT_DIR [--keypoints KEYPOINTS.json] IMAGE...
+usage: .venv/bin/python bench/finger_core.py OUT_DIR [--keypoints KEYPOINTS.json] [--masks DIR] IMAGE...
 A finger core is a capsule along the last three MediaPipe hand landmarks of each finger (PIP -> DIP -> TIP;
 MCP -> IP -> TIP for the thumb), with radius
 CORE_RADIUS x (wrist-to-middle-MCP distance). It sits inside the finger, so it gives finger recall, not IoU.
 Prints one JSON line per finger and writes an overlay of the cores for a visual check.
 Fingers whose core lies wholly outside the frame are skipped. Images with no detected hand are reported on stderr.
+
+--masks DIR adds one more model, MASKS_MODEL: person probabilities read from DIR/<image stem>.png (8-bit, any size,
+resized bilinearly to 640x480). bench/browser/litert_masks.html writes such masks from LiteRT.js.
 
 Hands come from HandLandmarker, or from KEYPOINTS.json for images where a person placed the points (hard cases the
 detector misses). An image listed there uses only its listed hands and fingers. The format, in original image pixels
@@ -32,6 +35,7 @@ FINGERS = {"thumb": (2, 3, 4), "index": (6, 7, 8), "middle": (10, 11, 12), "ring
 CORE_RADIUS = 0.06
 THRESHOLD = 0.5
 KEPT = 0.5
+MASKS_MODEL = "litertjs_multiclass"
 
 
 def landmarker():
@@ -84,6 +88,7 @@ def main():
     p.add_argument("out_dir", type=Path)
     p.add_argument("images", type=Path, nargs="+")
     p.add_argument("--keypoints", type=Path)
+    p.add_argument("--masks", type=Path)
     args = p.parse_args()
     keypoints = json.loads(args.keypoints.read_text()) if args.keypoints else {}
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -97,6 +102,8 @@ def main():
             name: np.squeeze(to_person([m.numpy_view() for m in segs[name].segment(image).confidence_masks]))
             for name, to_person in MODELS.items()
         }
+        if args.masks:
+            probs[MASKS_MODEL] = np.asarray(Image.open(args.masks / f"{path.stem}.png").convert("L").resize(SIZE, Image.BILINEAR)) / 255.0
         overlay = Image.fromarray(rgb)
         draw = ImageDraw.Draw(overlay)
         if path.name in keypoints:

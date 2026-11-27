@@ -1,0 +1,28 @@
+{
+ "commit": "ea663f087d100d317d2d048f880fa87e0a8264e4",
+ "dirty": [
+  "bench/browser/litert.js",
+  "bench/browser/serve_latency.py",
+  "bench/eval_person_iou.py",
+  "bench/finger_core.py",
+  "docs/baselines.md"
+ ],
+ "created_utc": "2026-11-27T00:24:21+00:00",
+ "machine": {
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "arch": "arm64"
+ },
+ "python": "3.15.2",
+ "packages": {
+  "mediapipe": "1.2.3",
+  "numpy": "2.5.5",
+  "pillow": "13.0.0"
+ },
+ "models": {
+  "hand_landmarker.task": "fbc2a30080c3c557093b5ddfc334698132eb341044ccee322ccf8bcf3607cde1",
+  "selfie_multiclass_256x256.tflite": "c6748b1253a99067ef71f7e26ca71096cd449baefa8f101900ea23016507e0e0",
+  "selfie_segmenter.tflite": "191ac9529ae506ee0beefa6b2c945a172dab9d07d1e802a290a4e4038226658b",
+  "selfie_segmenter_landscape.tflite": "490e9ea734313e0de10fa0cd9e3c6133e36ea4db2b7a49bde9ef019f72796b8e"
+ },
+ "note": "#50 LiteRT.js 2.6.0 WebGPU masks (litert_masks.html) vs MediaPipe Python 1.2.3 CPU; HaGRID v1 peace_300 crop43, EasyPortrait ids.txt (800) whole"
+}

@@ -330,3 +330,29 @@ multiclass、static の1フレームの内訳（p50、2回とも同じ値）:
 - MediaPipe との差は主に GPU の推論そのもの（MediaPipe は約 7.4 ms、LiteRT.js は約 2.4 ms）。どのカーネルが速いのかは確かめていない
 - 精度の指標（指の生存率、EasyPortrait の IoU）は Python の MediaPipe で測っている。LiteRT.js の経路での値は、1枚での一致から同じと見積もっただけで、評価セットでは測っていない
 - エラーは0（例外が出ればページは `error` を返す）
+
+### LiteRT.js の経路での精度（#50、2026-11-27 09:16 の実行）
+
+上の LiteRT.js の経路（canvas での縮小、[−1, 1]、WebGPU で推論、softmax）のマスクを評価セットで測った。`bench/browser/litert_masks.html` が画像ごとに person 確率を 256×256 の8ビット PNG にしてサーバーに送り（`serve_latency.py --mask-dir DIR`）、`finger_core.py --masks DIR` と `eval_person_iou.py --masks DIR` がそれを `litertjs_multiclass` というモデルとして読む。マスクは画像の大きさに双線形で拡大する。結果は `bench/results/2026-11-27-litert-accuracy/`。
+
+手順（HaGRID の例。EasyPortrait は `#ep/ids/whole`）:
+
+```
+python3 -I bench/browser/serve_latency.py OUT.json --mask-dir MASKS &
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --dump-dom "http://127.0.0.1:8765/bench/browser/litert_masks.html#hagrid/peace_300/crop43"
+.venv/bin/python bench/finger_core.py OVERLAY_DIR --masks MASKS $(sed 's|^|data/hagrid_v1/|' data/hagrid_v1/peace_300.txt) > fingers.jsonl
+```
+
+`crop43` は `finger_core.py` と同じく 4:3 の中央を切り出して 640×480 にしてからモデルに渡す。`whole` は `eval_person_iou.py` と同じく画像全体を渡す。
+
+| 評価 | MediaPipe（Python、CPU） | LiteRT.js（ブラウザ、WebGPU） | 対になった差（標準誤差） |
+| --- | --- | --- | --- |
+| 指の生存率（HaGRID v1 peace 300、1,422本） | 0.909 ± 0.011 | 0.909 ± 0.011 | LiteRT.js だけで残った指 14本、MediaPipe だけで残った指 15本 |
+| person IoU、画像平均（EasyPortrait 800枚） | 98.11% | 98.13% | +0.02 ポイント（0.02） |
+| person IoU、全画素 | 98.16% | 98.17% | |
+| Boundary F | 87.10% | 86.88% | −0.22 ポイント（0.07） |
+
+- 指の生存率と person IoU は、実行系を替えても変わらない。合格条件の「EasyPortrait の人物 IoU が基準を下回らない」も守れている
+- Boundary F だけ 0.22 ポイント下がり、標準誤差の3倍ある。縮小の方法（ブラウザの canvas と MediaPipe の違い）か、マスクを8ビットにして拡大する手順のどちらかが原因と考える（推論。切り分けていない）
+- MediaPipe の行は、前の計測（指の生存率 0.909、800枚の IoU 98.11% / 98.16%、Boundary F 87.10%）と同じ値になった。ハーネスは同じものを測っている
+- エラーは0（HaGRID 300枚、EasyPortrait 800枚のどちらもマスクを出した）
