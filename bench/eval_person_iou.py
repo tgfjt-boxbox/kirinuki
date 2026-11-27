@@ -4,7 +4,7 @@ usage: .venv/bin/python bench/eval_person_iou.py SAMPLE_DIR OUT_JSON [--models N
 SAMPLE_DIR holds ids.txt, images/<id>.jpg and test/<id>.png (EasyPortrait: every class > 0 is person).
 Person probability: selfie_segmenter* emit it directly; multiclass emits 6 classes, so person = 1 - background.
 The image is passed whole; MediaPipe resizes to the model input and returns masks at image resolution.
---models limits the MediaPipe models. --masks DIR adds MASKS_MODEL: person probabilities read from DIR/<id>.png
+--models limits the MediaPipe models (none with `--models --masks DIR`). --masks DIR adds MASKS_MODEL: person probabilities read from DIR/<id>.png
 (8-bit, resized bilinearly to the image), as bench/browser/litert_masks.html writes them from LiteRT.js.
 """
 import argparse
@@ -66,7 +66,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("root", type=Path)
     p.add_argument("out", type=Path)
-    p.add_argument("--models", nargs="+", choices=list(MODELS), default=list(MODELS))
+    p.add_argument("--models", nargs="*", choices=list(MODELS), default=list(MODELS))
     p.add_argument("--masks", type=Path)
     args = p.parse_args()
     root, out = args.root, args.out

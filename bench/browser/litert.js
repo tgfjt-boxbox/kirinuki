@@ -1,6 +1,6 @@
 import { loadLiteRt, loadAndCompile, Environment } from "./vendor/litertjs/core/dist/index.js";
 import { SIZE, preprocess, infer } from "./litert_core.js";
-import { gpuSegmenter } from "./litert_gpu.js";
+import { gpuSegmenter, gpuZoomSegmenter } from "./litert_gpu.js";
 import { FilesetResolver, ImageSegmenter } from "./vendor/package/vision_bundle.mjs";
 
 const [hashInput, hashRepeat, hashF16] = location.hash.slice(1).split("/");
@@ -42,11 +42,16 @@ function compositor(gl) {
     precision highp float;
     uniform sampler2D frame;
     uniform highp sampler2D mask;
+    uniform highp sampler2D zoomMask;
+    uniform vec4 box;
     uniform vec3 background;
     in vec2 uv;
     out vec4 color;
     void main() {
-      float a = 1.0 - texture(mask, uv).r;
+      float bg = texture(mask, uv).r;
+      vec2 zuv = (uv - box.xy) / box.zw;
+      if (box.z > 0.0 && all(greaterThanEqual(zuv, vec2(0.0))) && all(lessThanEqual(zuv, vec2(1.0)))) bg = min(bg, texture(zoomMask, zuv).r);
+      float a = 1.0 - bg;
       color = vec4(mix(background, texture(frame, uv).rgb, a), 1.0);
     }`));
   gl.linkProgram(prog);
@@ -61,10 +66,13 @@ function compositor(gl) {
   };
   const frameTex = tex(gl.LINEAR);
   const maskTex = tex(gl.LINEAR);
+  const zoomTex = tex(gl.LINEAR);
   gl.bindTexture(gl.TEXTURE_2D, null);
   const loc = (n) => gl.getUniformLocation(prog, n);
 
-  return (source, background) => {
+  // mask: a background Float32Array, or a gpuZoomSegmenter result { first, second, box }.
+  return (source, mask) => {
+    const zoom = mask instanceof Float32Array ? { first: mask, second: null, box: null } : mask;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     gl.useProgram(prog);
@@ -72,12 +80,19 @@ function compositor(gl) {
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, maskTex);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16F, SIZE, SIZE, 0, gl.RED, gl.FLOAT, background);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16F, SIZE, SIZE, 0, gl.RED, gl.FLOAT, zoom.first);
+    if (zoom.box) {
+      gl.activeTexture(gl.TEXTURE2);
+      gl.bindTexture(gl.TEXTURE_2D, zoomTex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16F, SIZE, SIZE, 0, gl.RED, gl.FLOAT, zoom.second);
+    }
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, frameTex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
     gl.uniform1i(loc("frame"), 0);
     gl.uniform1i(loc("mask"), 1);
+    gl.uniform1i(loc("zoomMask"), 2);
+    gl.uniform4fv(loc("box"), zoom.box ?? [0, 0, 0, 0]);
     gl.uniform3fv(loc("background"), BACKGROUND);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.bindVertexArray(null);
@@ -135,6 +150,8 @@ async function main() {
     preprocess(smallCtx, canvas, host);
     out.mask_agreement_vs_mediapipe = agreement(await infer(model, environment, host), mp, 640, 480);
     const segmentOnGpu = gpuSegmenter(device, model, environment);
+    const zoomOnGpu = gpuZoomSegmenter(device, model, environment);
+    const zoomAlwaysOnGpu = gpuZoomSegmenter(device, model, environment, { maxArea: Infinity });
     out.gpu_mask_agreement_vs_mediapipe = agreement(await segmentOnGpu(canvas), mp, 640, 480);
 
     const PATHS = {
@@ -143,11 +160,14 @@ async function main() {
         return infer(model, environment, host);
       },
       LITERT_WEBGPU_GPUPRE_COMPOSITE: () => segmentOnGpu(canvas),
+      LITERT_WEBGPU_ZOOM_COMPOSITE: () => zoomOnGpu(canvas),
+      LITERT_WEBGPU_ZOOM_ALWAYS_COMPOSITE: () => zoomAlwaysOnGpu(canvas),
     };
     for (const input of INPUTS)
       for (let k = 0; k < REPEAT; k++)
         for (const [mode, segment] of Object.entries(PATHS)) {
           const seg = [], total = [];
+          let zoomed = 0;
           for (let i = 0; i < WARMUP + FRAMES; i++) {
             ctx.fillStyle = "#000";
             ctx.fillRect(0, 0, 640, 480);
@@ -158,9 +178,9 @@ async function main() {
             composite(canvas, bg);
             gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
             const t2 = performance.now();
-            if (i >= WARMUP) { seg.push(t1 - t0); total.push(t2 - t0); }
+            if (i >= WARMUP) { seg.push(t1 - t0); total.push(t2 - t0); zoomed += !!bg.box; }
           }
-          out.results.push({ mode, input, frames: FRAMES, segment_ms: stat(seg), with_readback_ms: stat(total) });
+          out.results.push({ mode, input, frames: FRAMES, zoomed_frames: zoomed, segment_ms: stat(seg), with_readback_ms: stat(total) });
         }
     model.delete();
   } catch (e) {

@@ -1,0 +1,581 @@
+{
+ "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.0.0 Safari/537.36",
+ "model": "selfie_multiclass_256x256",
+ "f16": true,
+ "results": [
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 4.9,
+    "p95": 5.1
+   },
+   "with_readback_ms": {
+    "p50": 5.8,
+    "p95": 6
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_GPUPRE_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3.1,
+    "p95": 3.2
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3.1,
+    "p95": 3.2
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_ALWAYS_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 100,
+   "segment_ms": {
+    "p50": 5.5,
+    "p95": 5.7
+   },
+   "with_readback_ms": {
+    "p50": 6.7,
+    "p95": 6.9
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 4.9,
+    "p95": 5.1
+   },
+   "with_readback_ms": {
+    "p50": 5.8,
+    "p95": 6.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_GPUPRE_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3.1,
+    "p95": 3.2
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3.1,
+    "p95": 3.2
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.2
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_ALWAYS_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 100,
+   "segment_ms": {
+    "p50": 5.6,
+    "p95": 5.7
+   },
+   "with_readback_ms": {
+    "p50": 6.7,
+    "p95": 6.9
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 4.8,
+    "p95": 5
+   },
+   "with_readback_ms": {
+    "p50": 5.8,
+    "p95": 6
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_GPUPRE_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3.1,
+    "p95": 3.1
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3.1,
+    "p95": 3.2
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_ALWAYS_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 100,
+   "segment_ms": {
+    "p50": 5.6,
+    "p95": 5.7
+   },
+   "with_readback_ms": {
+    "p50": 6.8,
+    "p95": 7
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 4.8,
+    "p95": 5
+   },
+   "with_readback_ms": {
+    "p50": 5.7,
+    "p95": 6
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_GPUPRE_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3.1,
+    "p95": 3.2
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3.1,
+    "p95": 3.2
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_ALWAYS_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 100,
+   "segment_ms": {
+    "p50": 5.6,
+    "p95": 5.7
+   },
+   "with_readback_ms": {
+    "p50": 6.8,
+    "p95": 6.9
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 4.9,
+    "p95": 5
+   },
+   "with_readback_ms": {
+    "p50": 5.8,
+    "p95": 6
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_GPUPRE_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3.1,
+    "p95": 3.2
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3.1,
+    "p95": 3.2
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_ALWAYS_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "zoomed_frames": 100,
+   "segment_ms": {
+    "p50": 5.6,
+    "p95": 5.7
+   },
+   "with_readback_ms": {
+    "p50": 6.7,
+    "p95": 6.9
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 4.8,
+    "p95": 5
+   },
+   "with_readback_ms": {
+    "p50": 5.8,
+    "p95": 5.9
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_GPUPRE_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3,
+    "p95": 3.1
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3.1,
+    "p95": 3.2
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_ALWAYS_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 100,
+   "segment_ms": {
+    "p50": 5.5,
+    "p95": 5.7
+   },
+   "with_readback_ms": {
+    "p50": 6.7,
+    "p95": 6.9
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 4.8,
+    "p95": 5
+   },
+   "with_readback_ms": {
+    "p50": 5.7,
+    "p95": 6
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_GPUPRE_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3,
+    "p95": 3.1
+   },
+   "with_readback_ms": {
+    "p50": 3.9,
+    "p95": 4
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3.1,
+    "p95": 3.2
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.2
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_ALWAYS_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 100,
+   "segment_ms": {
+    "p50": 5.5,
+    "p95": 5.7
+   },
+   "with_readback_ms": {
+    "p50": 6.7,
+    "p95": 6.9
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 4.8,
+    "p95": 5
+   },
+   "with_readback_ms": {
+    "p50": 5.7,
+    "p95": 5.9
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_GPUPRE_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3,
+    "p95": 3.2
+   },
+   "with_readback_ms": {
+    "p50": 3.9,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3.1,
+    "p95": 3.2
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_ALWAYS_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 100,
+   "segment_ms": {
+    "p50": 5.6,
+    "p95": 5.7
+   },
+   "with_readback_ms": {
+    "p50": 6.7,
+    "p95": 6.9
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 4.8,
+    "p95": 5.1
+   },
+   "with_readback_ms": {
+    "p50": 5.7,
+    "p95": 6
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_GPUPRE_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3,
+    "p95": 3.1
+   },
+   "with_readback_ms": {
+    "p50": 3.9,
+    "p95": 4
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3.1,
+    "p95": 3.2
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_ALWAYS_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 100,
+   "segment_ms": {
+    "p50": 5.5,
+    "p95": 5.6
+   },
+   "with_readback_ms": {
+    "p50": 6.7,
+    "p95": 6.9
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 4.8,
+    "p95": 5.1
+   },
+   "with_readback_ms": {
+    "p50": 5.7,
+    "p95": 6.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_GPUPRE_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3,
+    "p95": 3.1
+   },
+   "with_readback_ms": {
+    "p50": 3.9,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 0,
+   "segment_ms": {
+    "p50": 3.1,
+    "p95": 3.2
+   },
+   "with_readback_ms": {
+    "p50": 4,
+    "p95": 4.1
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_ZOOM_ALWAYS_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "zoomed_frames": 100,
+   "segment_ms": {
+    "p50": 5.5,
+    "p95": 5.7
+   },
+   "with_readback_ms": {
+    "p50": 6.7,
+    "p95": 6.8
+   }
+  }
+ ],
+ "gpu": "apple metal-3",
+ "device_features": [
+  "core-features-and-limits",
+  "shader-f16"
+ ],
+ "accelerator": "webgpu",
+ "mask_agreement_vs_mediapipe": {
+  "pixel": 0.9997,
+  "person_iou": 0.9993
+ },
+ "gpu_mask_agreement_vs_mediapipe": {
+  "pixel": 0.9999,
+  "person_iou": 0.9998
+ }
+}
