@@ -300,3 +300,33 @@ multiclass、static の1フレームの内訳（p50、2回とも同じ値）:
 | selfie_segmenter_landscape | 2.3、2.2 | 1.6、2.2 | 合格 |
 
 - 基準の multiclass は、合成込みで条件を 1.2 ms 超える。基準モデル自身が条件を満たしていない
+- この表は MediaPipe tasks-vision で動かした値。同じ multiclass を LiteRT.js の WebGPU で動かすと p95 6.0 ms で合格する（次の節、#45）
+
+### 実行系を LiteRT.js の WebGPU に替えた multiclass（#45、2026-11-27 09:06 の実行）
+
+同じ `selfie_multiclass_256x256.tflite` を、MediaPipe tasks-vision ではなく LiteRT.js（`@litertjs/core` 2.6.0、Apache-2.0）の WebGPU で動かした。取得は `scripts/fetch_litertjs.sh`（npm の integrity を確かめる）。ページは `bench/browser/litert.html`。手順は上と同じ2つのコマンドで、URL だけが違う（`litert.html#入力/回数/f16`、例 `litert.html#/3/f16`）。結果は `bench/results/2026-11-27-litert-webgpu/`。
+
+1フレームの経路（`LITERT_WEBGPU_COMPOSITE`）:
+
+1. 前処理（CPU）: 640×480 の canvas を 256×256 に描き、`getImageData` から RGB を [−1, 1] の float にする
+2. 推論（WebGPU）: 入力を GPU に送り、推論し、出力（256×256×6 のロジット）を CPU に読み出す
+3. 後処理（CPU）: 6クラスの softmax をとり、background の確率を1枚にする
+4. 合成（WebGL2）: そのマスクと入力フレームをテクスチャに上げ、`GPU_COMPOSITE` と同じシェーダーで混ぜ、1画素の `readPixels` で終わりを待つ
+
+値は合成込みの p50 / p95（ms）。1回のページ読み込みで3回ずつ測り、MediaPipe と交互に読み込んだ:
+
+| 実行系 | 入力 | 回数 | p50 | p95 の範囲 |
+| --- | --- | --- | --- | --- |
+| MediaPipe（`GPU_COMPOSITE`） | static | 6 | 8.9 | 9.2〜9.3 |
+| LiteRT.js WebGPU、shader-f16 あり | static | 3 | 5.7〜5.8 | 5.9〜6.0 |
+| LiteRT.js WebGPU、shader-f16 あり | moving | 3 | 5.7 | 5.8〜6.0 |
+| LiteRT.js WebGPU、shader-f16 なし | static | 3 | 6.7〜6.8 | 6.9〜7.0 |
+| LiteRT.js WebGPU、shader-f16 なし | moving | 3 | 6.7 | 6.9 |
+
+- **multiclass は、実行系を替えるだけで合格条件（合成込み p95 ≤ 8 ms）を満たす**。p95 は 9.2 ms から 6.0 ms になった。shader-f16 を使えない GPU を想定しても 7.0 ms
+- 出力は MediaPipe と同じと見てよい。同じフレームで MediaPipe（GPU）の confidence mask と比べると、0.5 で二値にしたマスクの画素一致は 0.9997、person IoU は 0.9993（f16 の有無で同じ）。この比べ方は外れを検出できる。入力を [0, 1] にすると person IoU は 0.985 に、softmax をかけずにロジットをそのまま使うと 0.970 に下がった
+- 内訳（f16 あり、p50）: 前処理 0.8 ms、推論から後処理まで 4.1 ms、合成 0.8 ms。試作の段階で別に測った値では、この 4.1 ms のうち GPU の推論そのものが約 2.4 ms、CPU への読み出しが約 0.3 ms、CPU の softmax が約 1.2 ms（試作のページでの1回の計測。結果の JSON はない）
+- 律速は GPU の推論（約 2.4 ms）と、その前後の CPU の処理（前処理、softmax、マスクのアップロードで約 3 ms）。CPU の処理は、前処理と softmax を GPU のシェーダーに移せば減らせる（推論。試していない）
+- MediaPipe との差は主に GPU の推論そのもの（MediaPipe は約 7.4 ms、LiteRT.js は約 2.4 ms）。どのカーネルが速いのかは確かめていない
+- 精度の指標（指の生存率、EasyPortrait の IoU）は Python の MediaPipe で測っている。LiteRT.js の経路での値は、1枚での一致から同じと見積もっただけで、評価セットでは測っていない
+- エラーは0（例外が出ればページは `error` を返す）

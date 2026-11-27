@@ -1,0 +1,195 @@
+import { loadLiteRt, loadAndCompile, Environment, Tensor } from "./vendor/litertjs/core/dist/index.js";
+import { FilesetResolver, ImageSegmenter } from "./vendor/package/vision_bundle.mjs";
+
+const [hashInput, hashRepeat, hashF16] = location.hash.slice(1).split("/");
+const MODEL = "selfie_multiclass_256x256";
+const INPUTS = hashInput ? [hashInput] : ["static", "moving"];
+const REPEAT = Number(hashRepeat) || 1;
+const F16 = hashF16 !== "nof16";
+const SIZE = 256;
+const BACKGROUND = [0, 1, 0];
+const WARMUP = 20;
+const FRAMES = 100;
+
+const pct = (xs, p) => xs.slice().sort((a, b) => a - b)[Math.min(xs.length - 1, Math.floor(p * xs.length))];
+const stat = (xs) => ({ p50: +pct(xs, 0.5).toFixed(2), p95: +pct(xs, 0.95).toFixed(2) });
+
+function drawFrame(ctx, img, input, i) {
+  const s = Math.max(640 / img.width, 480 / img.height) * (input === "moving" ? 1.15 : 1);
+  const dx = input === "moving" ? 40 * Math.sin(i / 7) : 0;
+  const dy = input === "moving" ? 20 * Math.cos(i / 11) : 0;
+  ctx.drawImage(img, (640 - img.width * s) / 2 + dx, (480 - img.height * s) / 2 + dy, img.width * s, img.height * s);
+}
+
+function compositor(gl) {
+  const shader = (type, src) => {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src);
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
+    return sh;
+  };
+  const prog = gl.createProgram();
+  gl.attachShader(prog, shader(gl.VERTEX_SHADER, `#version 300 es
+    out vec2 uv;
+    void main() {
+      vec2 p = vec2(gl_VertexID & 1, gl_VertexID >> 1);
+      uv = vec2(p.x, 1.0 - p.y);
+      gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
+    }`));
+  gl.attachShader(prog, shader(gl.FRAGMENT_SHADER, `#version 300 es
+    precision highp float;
+    uniform sampler2D frame;
+    uniform highp sampler2D mask;
+    uniform vec3 background;
+    in vec2 uv;
+    out vec4 color;
+    void main() {
+      float a = 1.0 - texture(mask, uv).r;
+      color = vec4(mix(background, texture(frame, uv).rgb, a), 1.0);
+    }`));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  const vao = gl.createVertexArray();
+  const tex = (filter) => {
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, filter], [gl.TEXTURE_MAG_FILTER, filter],
+      [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+    return t;
+  };
+  const frameTex = tex(gl.LINEAR);
+  const maskTex = tex(gl.LINEAR);
+  gl.bindTexture(gl.TEXTURE_2D, null);
+  const loc = (n) => gl.getUniformLocation(prog, n);
+
+  return (source, background) => {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    gl.useProgram(prog);
+    gl.bindVertexArray(vao);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, maskTex);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16F, SIZE, SIZE, 0, gl.RED, gl.FLOAT, background);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, frameTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+    gl.uniform1i(loc("frame"), 0);
+    gl.uniform1i(loc("mask"), 1);
+    gl.uniform3fv(loc("background"), BACKGROUND);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.bindVertexArray(null);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+  };
+}
+
+// MediaPipe feeds this model RGB in [-1, 1]; [0, 1] drops the mask agreement with MediaPipe to person IoU 0.985.
+function preprocess(smallCtx, frame, host) {
+  smallCtx.drawImage(frame, 0, 0, SIZE, SIZE);
+  const px = smallCtx.getImageData(0, 0, SIZE, SIZE).data;
+  for (let i = 0, j = 0; i < px.length; i += 4, j += 3) {
+    host[j] = px[i] / 127.5 - 1;
+    host[j + 1] = px[i + 1] / 127.5 - 1;
+    host[j + 2] = px[i + 2] / 127.5 - 1;
+  }
+}
+
+async function infer(model, environment, host) {
+  const input = new Tensor(host, [1, SIZE, SIZE, 3], environment);
+  const gpuIn = await input.moveTo("webgpu");
+  const [res] = await model.run(gpuIn);
+  gpuIn.delete();
+  const cpu = await res.moveTo("wasm");
+  const all = cpu.toTypedArray();
+  cpu.delete();
+  // The model outputs logits for 6 classes; MediaPipe's confidence mask is the softmax of channel 0 (background).
+  const bg = new Float32Array(SIZE * SIZE);
+  for (let i = 0; i < bg.length; i++) {
+    const o = i * 6;
+    let m = all[o];
+    for (let c = 1; c < 6; c++) m = Math.max(m, all[o + c]);
+    let t = 0;
+    for (let c = 0; c < 6; c++) t += Math.exp(all[o + c] - m);
+    bg[i] = Math.exp(all[o] - m) / t;
+  }
+  return bg;
+}
+
+function agreement(bg, mpMask, w, h) {
+  let same = 0, inter = 0, union = 0;
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const fy = Math.min(SIZE - 1, Math.max(0, (y + 0.5) * SIZE / h - 0.5)), fx = Math.min(SIZE - 1, Math.max(0, (x + 0.5) * SIZE / w - 0.5));
+      const y0 = Math.floor(fy), x0 = Math.floor(fx), y1 = Math.min(SIZE - 1, y0 + 1), x1 = Math.min(SIZE - 1, x0 + 1), wy = fy - y0, wx = fx - x0;
+      const v = (bg[y0 * SIZE + x0] * (1 - wx) + bg[y0 * SIZE + x1] * wx) * (1 - wy) + (bg[y1 * SIZE + x0] * (1 - wx) + bg[y1 * SIZE + x1] * wx) * wy;
+      const a = v < 0.5, b = mpMask[y * w + x] < 0.5;
+      same += a === b;
+      inter += a && b;
+      union += a || b;
+    }
+  return { pixel: +(same / (w * h)).toFixed(4), person_iou: +(inter / union).toFixed(4) };
+}
+
+async function main() {
+  const out = { userAgent: navigator.userAgent, model: MODEL, f16: F16, results: [] };
+  try {
+    const adapter = await navigator.gpu.requestAdapter();
+    out.gpu = `${adapter.info.vendor} ${adapter.info.architecture}`;
+    const device = await adapter.requestDevice({ requiredFeatures: F16 ? [...adapter.features].filter((f) => f === "shader-f16") : [] });
+    out.device_features = [...device.features].sort();
+    await loadLiteRt("./vendor/litertjs/core/wasm/");
+    const environment = await Environment.create({ webGpuDevice: device });
+    const model = await loadAndCompile(`../../models/${MODEL}.tflite`, { accelerator: "webgpu", environment });
+    out.accelerator = model.options.accelerator;
+
+    const img = new Image();
+    img.src = "../materials/public/office-peace.png";
+    await img.decode();
+    const canvas = Object.assign(document.createElement("canvas"), { width: 640, height: 480 });
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const smallCtx = Object.assign(document.createElement("canvas"), { width: SIZE, height: SIZE }).getContext("2d", { willReadFrequently: true });
+    const glCanvas = Object.assign(document.createElement("canvas"), { width: 640, height: 480 });
+    const gl = glCanvas.getContext("webgl2");
+    const composite = compositor(gl);
+    const pixel = new Uint8Array(4);
+    const host = new Float32Array(SIZE * SIZE * 3);
+
+    drawFrame(ctx, img, "static", 0);
+    const fileset = await FilesetResolver.forVisionTasks("./vendor/package/wasm");
+    const seg = await ImageSegmenter.createFromOptions(fileset, {
+      baseOptions: { modelAssetPath: `../../models/${MODEL}.tflite`, delegate: "GPU" },
+      runningMode: "IMAGE", outputConfidenceMasks: true, outputCategoryMask: false,
+    });
+    const mp = seg.segment(canvas).confidenceMasks[0].getAsFloat32Array().slice();
+    seg.close();
+    preprocess(smallCtx, canvas, host);
+    out.mask_agreement_vs_mediapipe = agreement(await infer(model, environment, host), mp, 640, 480);
+
+    for (const input of INPUTS)
+      for (let k = 0; k < REPEAT; k++) {
+        const pre = [], inf = [], total = [];
+        for (let i = 0; i < WARMUP + FRAMES; i++) {
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, 640, 480);
+          drawFrame(ctx, img, input, i);
+          const t0 = performance.now();
+          preprocess(smallCtx, canvas, host);
+          const t1 = performance.now();
+          const bg = await infer(model, environment, host);
+          const t2 = performance.now();
+          composite(canvas, bg);
+          gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+          const t3 = performance.now();
+          if (i >= WARMUP) { pre.push(t1 - t0); inf.push(t2 - t1); total.push(t3 - t0); }
+        }
+        out.results.push({ mode: "LITERT_WEBGPU_COMPOSITE", input, frames: FRAMES, preprocess_ms: stat(pre), infer_readback_ms: stat(inf), with_readback_ms: stat(total) });
+      }
+    model.delete();
+  } catch (e) {
+    out.error = String(e && e.stack || e);
+  }
+  await fetch("/result", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(out) });
+  document.body.append("RESULT " + JSON.stringify(out));
+}
+main();

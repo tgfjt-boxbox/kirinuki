@@ -1,0 +1,119 @@
+{
+ "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/158.0.0.0 Safari/537.36",
+ "model": "selfie_multiclass_256x256",
+ "f16": true,
+ "results": [
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "preprocess_ms": {
+    "p50": 0.8,
+    "p95": 0.9
+   },
+   "infer_readback_ms": {
+    "p50": 4.1,
+    "p95": 4.2
+   },
+   "with_readback_ms": {
+    "p50": 5.8,
+    "p95": 6
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "preprocess_ms": {
+    "p50": 0.8,
+    "p95": 0.9
+   },
+   "infer_readback_ms": {
+    "p50": 4.1,
+    "p95": 4.2
+   },
+   "with_readback_ms": {
+    "p50": 5.7,
+    "p95": 5.9
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "static",
+   "frames": 100,
+   "preprocess_ms": {
+    "p50": 0.8,
+    "p95": 0.9
+   },
+   "infer_readback_ms": {
+    "p50": 4.1,
+    "p95": 4.2
+   },
+   "with_readback_ms": {
+    "p50": 5.7,
+    "p95": 5.9
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "preprocess_ms": {
+    "p50": 0.8,
+    "p95": 0.9
+   },
+   "infer_readback_ms": {
+    "p50": 4.1,
+    "p95": 4.2
+   },
+   "with_readback_ms": {
+    "p50": 5.7,
+    "p95": 6
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "preprocess_ms": {
+    "p50": 0.8,
+    "p95": 0.9
+   },
+   "infer_readback_ms": {
+    "p50": 4.1,
+    "p95": 4.2
+   },
+   "with_readback_ms": {
+    "p50": 5.7,
+    "p95": 5.9
+   }
+  },
+  {
+   "mode": "LITERT_WEBGPU_COMPOSITE",
+   "input": "moving",
+   "frames": 100,
+   "preprocess_ms": {
+    "p50": 0.8,
+    "p95": 0.9
+   },
+   "infer_readback_ms": {
+    "p50": 4.1,
+    "p95": 4.2
+   },
+   "with_readback_ms": {
+    "p50": 5.7,
+    "p95": 5.8
+   }
+  }
+ ],
+ "gpu": "apple metal-3",
+ "device_features": [
+  "core-features-and-limits",
+  "shader-f16"
+ ],
+ "accelerator": "webgpu",
+ "mask_agreement_vs_mediapipe": {
+  "pixel": 0.9997,
+  "person_iou": 0.9993
+ }
+}
