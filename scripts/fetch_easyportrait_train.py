@@ -2,13 +2,15 @@
 Source: the EasyPortrait v2 train.zip on the dataset's sbercloud storage (68.3 GB). Masks come from the local data/easyportrait/annotations.zip.
 The images are read by HTTP Range from the remote zip, so only the central directory and the chosen files are downloaded, not all 68 GB.
 The sample is the first N ids in sorted order that have both an image and a mask. Ids are UUIDs, so this is a reproducible random sample.
-usage: .venv/bin/python -I scripts/fetch_easyportrait_train.py N [--max-side 512]
+usage: .venv/bin/python -I scripts/fetch_easyportrait_train.py N [--max-side 512] [--workers 16]
 """
 
 import argparse
 import http.client
 import io
 import os
+import threading
+from concurrent.futures import ThreadPoolExecutor
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -102,6 +104,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("n", type=int)
     p.add_argument("--max-side", type=int, default=512)
+    p.add_argument("--workers", type=int, default=16)
     args = p.parse_args()
 
     images_dir, masks_dir = OUT / "images", OUT / "masks"
@@ -111,26 +114,33 @@ def main():
 
     ann = zipfile.ZipFile(ANNOTATIONS)
     masks = {Path(m).stem: m for m in ann.namelist() if m.startswith("train/") and m.endswith(".png")}
-    remote = None
     if list_path.exists():
         ids = list_path.read_text().split()
     else:
-        remote, rzip, jpgs = open_remote()
+        _, _, jpgs = open_remote()
         ids = sorted(jpgs.keys() & masks.keys())[: args.n]
         write_atomic(list_path, lambda t: t.write_text("".join(i + "\n" for i in ids)))
     test_ids = set(TEST_IDS.read_text().split())
     assert not test_ids & set(ids), "train ids overlap the test split"
 
-    for i in ids:
+    # One connection fetches about 2 images a minute, so each worker thread keeps its own remote zip.
+    local = threading.local()
+    ann_lock = threading.Lock()
+
+    def fetch(i):
         img_out, mask_out = images_dir / f"{i}.jpg", masks_dir / f"{i}.png"
         if img_out.exists() and mask_out.exists():
-            continue
-        if remote is None:
-            remote, rzip, jpgs = open_remote()
-        img = Image.open(io.BytesIO(rzip.read(jpgs[i]))).convert("RGB")
-        mask = Image.open(io.BytesIO(ann.read(masks[i])))
+            return 0
+        if not hasattr(local, "rzip"):
+            local.remote, local.rzip, local.jpgs = open_remote()
+        before = local.remote.fetched
+        img = Image.open(io.BytesIO(local.rzip.read(local.jpgs[i]))).convert("RGB")
+        with ann_lock:
+            mask = Image.open(io.BytesIO(ann.read(masks[i])))
+            mask.load()
         # train.zip holds originals up to about 3000 px while the masks are at most 1920 px, so match shapes, not sizes.
-        assert abs(img.width * mask.height / img.height - mask.width) <= 1, (i, img.size, mask.size)
+        # The mask's rounded height can shift the expected width by up to one image row's worth of aspect.
+        assert abs(img.width * mask.height / img.height - mask.width) <= max(1, img.width / img.height), (i, img.size, mask.size)
         scale = min(1, args.max_side / max(mask.size))
         size = (round(mask.width * scale), round(mask.height * scale))
         if img.size != size:
@@ -139,9 +149,13 @@ def main():
             mask = mask.resize(size, Image.NEAREST)
         write_atomic(img_out, lambda t: img.save(t, "JPEG", quality=95))
         write_atomic(mask_out, lambda t: mask.save(t, "PNG"))
+        return local.remote.fetched - before
+
+    with ThreadPoolExecutor(args.workers) as pool:
+        fetched = sum(pool.map(fetch, ids))
 
     on_disk = sum((images_dir / f"{i}.jpg").exists() and (masks_dir / f"{i}.png").exists() for i in ids)
-    print(f"listed {len(ids)}, on disk {on_disk}, bytes fetched {remote.fetched if remote else 0}")
+    print(f"listed {len(ids)}, on disk {on_disk}, image bytes fetched {fetched}")
 
 
 if __name__ == "__main__":

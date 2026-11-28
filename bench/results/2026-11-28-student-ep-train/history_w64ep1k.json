@@ -1,0 +1,166 @@
+{
+ "args": {
+  "data": [
+   "hagrid:data/hagrid_v1/train_500.txt:9000",
+   "ep_train:data/easyportrait_train/ids_1000.txt"
+  ],
+  "val": 200,
+  "size": 256,
+  "width": 64,
+  "epochs": 20,
+  "batch": 32,
+  "lr": 0.003,
+  "seed": 0,
+  "name": "w64e20ep1k"
+ },
+ "device": "mps",
+ "params": 3875329,
+ "history": [
+  {
+   "epoch": 0,
+   "val_bce": 0.6864601230621338,
+   "val_bce_floor": 0.2502897381782532,
+   "val_majority_agreement": 0.7122077941894531
+  },
+  {
+   "epoch": 1,
+   "train_bce": 0.5140893323413712,
+   "val_bce": 0.49452566146850585,
+   "val_pixel_agreement": 0.8158937072753907,
+   "seconds": 39.19345211982727
+  },
+  {
+   "epoch": 2,
+   "train_bce": 0.46556782101186944,
+   "val_bce": 0.4498310363292694,
+   "val_pixel_agreement": 0.8482836151123047,
+   "seconds": 39.09353995323181
+  },
+  {
+   "epoch": 3,
+   "train_bce": 0.43849719017258687,
+   "val_bce": 0.4256372094154358,
+   "val_pixel_agreement": 0.8739868927001954,
+   "seconds": 39.065781116485596
+  },
+  {
+   "epoch": 4,
+   "train_bce": 0.41257743134560726,
+   "val_bce": 0.4132109689712524,
+   "val_pixel_agreement": 0.8829852294921875,
+   "seconds": 39.06251287460327
+  },
+  {
+   "epoch": 5,
+   "train_bce": 0.39504054606155,
+   "val_bce": 0.40321829080581667,
+   "val_pixel_agreement": 0.8885251617431641,
+   "seconds": 39.068604946136475
+  },
+  {
+   "epoch": 6,
+   "train_bce": 0.37682032895787143,
+   "val_bce": 0.37419719457626344,
+   "val_pixel_agreement": 0.906908950805664,
+   "seconds": 39.06969380378723
+  },
+  {
+   "epoch": 7,
+   "train_bce": 0.36141432554791725,
+   "val_bce": 0.3716691493988037,
+   "val_pixel_agreement": 0.9127389526367188,
+   "seconds": 39.06464886665344
+  },
+  {
+   "epoch": 8,
+   "train_bce": 0.3511020153857986,
+   "val_bce": 0.36298667192459105,
+   "val_pixel_agreement": 0.9155255126953125,
+   "seconds": 39.069647789001465
+  },
+  {
+   "epoch": 9,
+   "train_bce": 0.34050328772308774,
+   "val_bce": 0.36355252742767336,
+   "val_pixel_agreement": 0.9212627410888672,
+   "seconds": 39.07289910316467
+  },
+  {
+   "epoch": 10,
+   "train_bce": 0.3311222394631041,
+   "val_bce": 0.3539281916618347,
+   "val_pixel_agreement": 0.9263134002685547,
+   "seconds": 39.07065010070801
+  },
+  {
+   "epoch": 11,
+   "train_bce": 0.3214425343643959,
+   "val_bce": 0.35825592279434204,
+   "val_pixel_agreement": 0.9232101440429688,
+   "seconds": 39.06364583969116
+  },
+  {
+   "epoch": 12,
+   "train_bce": 0.3164351143743782,
+   "val_bce": 0.34581617593765257,
+   "val_pixel_agreement": 0.9313808441162109,
+   "seconds": 39.071515798568726
+  },
+  {
+   "epoch": 13,
+   "train_bce": 0.3072451699634328,
+   "val_bce": 0.3431860399246216,
+   "val_pixel_agreement": 0.9336489105224609,
+   "seconds": 39.0630099773407
+  },
+  {
+   "epoch": 14,
+   "train_bce": 0.30017892234876803,
+   "val_bce": 0.33997063517570497,
+   "val_pixel_agreement": 0.9357237243652343,
+   "seconds": 39.06839203834534
+  },
+  {
+   "epoch": 15,
+   "train_bce": 0.2927785309984164,
+   "val_bce": 0.3403117084503174,
+   "val_pixel_agreement": 0.9382138824462891,
+   "seconds": 39.07079195976257
+  },
+  {
+   "epoch": 16,
+   "train_bce": 0.28593691698114726,
+   "val_bce": 0.3459556567668915,
+   "val_pixel_agreement": 0.9343685913085937,
+   "seconds": 39.07181215286255
+  },
+  {
+   "epoch": 17,
+   "train_bce": 0.28066287609575624,
+   "val_bce": 0.3502484893798828,
+   "val_pixel_agreement": 0.9322645568847656,
+   "seconds": 39.07978916168213
+  },
+  {
+   "epoch": 18,
+   "train_bce": 0.27811561918025685,
+   "val_bce": 0.3571870708465576,
+   "val_pixel_agreement": 0.9306987762451172,
+   "seconds": 39.06621432304382
+  },
+  {
+   "epoch": 19,
+   "train_bce": 0.2771284150184172,
+   "val_bce": 0.3517323970794678,
+   "val_pixel_agreement": 0.9324353790283203,
+   "seconds": 39.06576323509216
+  },
+  {
+   "epoch": 20,
+   "train_bce": 0.2721668435230317,
+   "val_bce": 0.34361507177352907,
+   "val_pixel_agreement": 0.9384142303466797,
+   "seconds": 39.07291603088379
+  }
+ ]
+}
