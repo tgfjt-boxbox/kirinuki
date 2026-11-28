@@ -1,7 +1,7 @@
 {
- "commit": "fb087ddc2fa33f326f30f49fa6050f331375f890",
+ "commit": "c169a74525241d20f27fef700e78aa5911a789e4",
  "dirty": [],
- "created_utc": "2026-11-28T12:10:37+00:00",
+ "created_utc": "2026-11-28T12:17:40+00:00",
  "machine": {
   "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
   "arch": "arm64"
@@ -18,5 +18,5 @@
   "selfie_segmenter.tflite": "191ac9529ae506ee0beefa6b2c945a172dab9d07d1e802a290a4e4038226658b",
   "selfie_segmenter_landscape.tflite": "490e9ea734313e0de10fa0cd9e3c6133e36ea4db2b7a49bde9ef019f72796b8e"
  },
- "note": "flicker.py --limit 150 --scale 1.2 --step {1,4} --box-ema {1.0,0.5,0.3}; produced before the docstring-only edit in this commit"
+ "note": "flicker s*_e*.json: flicker.py --limit 150 --scale 1.2 --step {1,4} --box-ema {1.0,0.5,0.3}; step1_ema05.json: flicker.py --box-ema 0.5 on peace_300 in 3 chunks (rows only); latency.json: litert.html#/3"
 }
