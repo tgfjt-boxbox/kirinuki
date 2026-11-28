@@ -5,7 +5,7 @@ import { FilesetResolver, ImageSegmenter } from "./vendor/package/vision_bundle.
 
 const [hashInput, hashRepeat, hashF16] = location.hash.slice(1).split("/");
 const MODEL = "selfie_multiclass_256x256";
-const INPUTS = hashInput ? [hashInput] : ["static", "moving"];
+const INPUTS = hashInput ? [hashInput] : ["static", "moving", "small"];
 const REPEAT = Number(hashRepeat) || 1;
 const F16 = hashF16 !== "nof16";
 const BACKGROUND = [0, 1, 0];
@@ -17,9 +17,9 @@ const pct = (xs, p) => xs.slice().sort((a, b) => a - b)[Math.min(xs.length - 1, 
 const stat = (xs) => ({ p50: +pct(xs, 0.5).toFixed(2), p95: +pct(xs, 0.95).toFixed(2) });
 
 function drawFrame(ctx, img, input, i) {
-  const s = Math.max(640 / img.width, 480 / img.height) * (input === "moving" ? 1.15 : 1);
-  const dx = input === "moving" ? 40 * Math.sin(i / 7) : 0;
-  const dy = input === "moving" ? 20 * Math.cos(i / 11) : 0;
+  const s = Math.max(640 / img.width, 480 / img.height) * { static: 1, moving: 1.15, small: 0.5 }[input];
+  const dx = input === "static" ? 0 : 40 * Math.sin(i / 7);
+  const dy = input === "static" ? 0 : 20 * Math.cos(i / 11);
   ctx.drawImage(img, (640 - img.width * s) / 2 + dx, (480 - img.height * s) / 2 + dy, img.width * s, img.height * s);
 }
 
