@@ -131,12 +131,17 @@ export function zoomBox(bg, { margin = 0.1, maxArea = 0.95 } = {}) {
 
 // Two passes: the whole frame, then the box around the person at full model resolution. The mask is
 // min(first, second) inside the box (max of the person probability), the first pass outside it; see zoomedAt.
-export function gpuZoomSegmenter(device, model, environment, options) {
+// boxEma < 1 blends each box with the previous frame's (weight boxEma on the new one) so a jumping box does not flicker on
+// video; a frame without a box drops the history. The default keeps no history, so stills are independent.
+export function gpuZoomSegmenter(device, model, environment, { boxEma = 1, ...options } = {}) {
   const segment = gpuSegmenter(device, model, environment);
   const first = new Float32Array(SIZE * SIZE), second = new Float32Array(SIZE * SIZE);
+  let prev = null;
   return async (source) => {
     await segment(source, FULL_FRAME, first);
-    const box = zoomBox(first, options);
+    let box = zoomBox(first, options);
+    if (box && prev) box = box.map((v, i) => boxEma * v + (1 - boxEma) * prev[i]);
+    prev = box;
     if (!box) return { first, second: null, box: null };
     await segment(source, box, second, false);
     return { first, second, box };

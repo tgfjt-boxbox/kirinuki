@@ -22,6 +22,11 @@ PIXEL = bytes.fromhex("47494638396101000100800000000000ffffff21f90401000000002c0
 
 
 class Handler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        # agent/chrome-headless keeps a profile across runs; without this it can run a cached copy of an edited page script.
+        self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
     def do_POST(self):
         name = self.path.removeprefix("/mask/")
         if name != self.path and self.server.mask_dir and name.endswith(".png") and "/" not in name and ".." not in name:

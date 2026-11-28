@@ -1,24 +1,25 @@
 import { loadLiteRt, loadAndCompile, Environment } from "./vendor/litertjs/core/dist/index.js";
 import { SIZE, preprocess, infer } from "./litert_core.js";
-import { gpuSegmenter, gpuZoomSegmenter } from "./litert_gpu.js";
+import { gpuSegmenter, gpuZoomSegmenter, zoomBox } from "./litert_gpu.js";
 import { FilesetResolver, ImageSegmenter } from "./vendor/package/vision_bundle.mjs";
 
 const [hashInput, hashRepeat, hashF16] = location.hash.slice(1).split("/");
 const MODEL = "selfie_multiclass_256x256";
-const INPUTS = hashInput ? [hashInput] : ["static", "moving"];
+const INPUTS = hashInput ? [hashInput] : ["static", "moving", "small"];
 const REPEAT = Number(hashRepeat) || 1;
 const F16 = hashF16 !== "nof16";
 const BACKGROUND = [0, 1, 0];
 const WARMUP = 20;
 const FRAMES = 100;
+const BOX_EMA = 0.3;
 
 const pct = (xs, p) => xs.slice().sort((a, b) => a - b)[Math.min(xs.length - 1, Math.floor(p * xs.length))];
 const stat = (xs) => ({ p50: +pct(xs, 0.5).toFixed(2), p95: +pct(xs, 0.95).toFixed(2) });
 
 function drawFrame(ctx, img, input, i) {
-  const s = Math.max(640 / img.width, 480 / img.height) * (input === "moving" ? 1.15 : 1);
-  const dx = input === "moving" ? 40 * Math.sin(i / 7) : 0;
-  const dy = input === "moving" ? 20 * Math.cos(i / 11) : 0;
+  const s = Math.max(640 / img.width, 480 / img.height) * { static: 1, moving: 1.15, small: 0.5 }[input];
+  const dx = input === "static" ? 0 : 40 * Math.sin(i / 7);
+  const dy = input === "static" ? 0 : 20 * Math.cos(i / 11);
   ctx.drawImage(img, (640 - img.width * s) / 2 + dx, (480 - img.height * s) / 2 + dy, img.width * s, img.height * s);
 }
 
@@ -116,7 +117,7 @@ function agreement(bg, mpMask, w, h) {
 }
 
 async function main() {
-  const out = { userAgent: navigator.userAgent, model: MODEL, f16: F16, results: [] };
+  const out = { userAgent: navigator.userAgent, model: MODEL, f16: F16, box_ema: BOX_EMA, results: [], ema_boxes: {} };
   try {
     const adapter = await navigator.gpu.requestAdapter();
     out.gpu = `${adapter.info.vendor} ${adapter.info.architecture}`;
@@ -152,6 +153,8 @@ async function main() {
     const segmentOnGpu = gpuSegmenter(device, model, environment);
     const zoomOnGpu = gpuZoomSegmenter(device, model, environment);
     const zoomAlwaysOnGpu = gpuZoomSegmenter(device, model, environment, { maxArea: Infinity });
+    const zoomEmaOnGpu = gpuZoomSegmenter(device, model, environment, { boxEma: BOX_EMA });
+    const zoomEmaAlwaysOnGpu = gpuZoomSegmenter(device, model, environment, { boxEma: BOX_EMA, maxArea: Infinity });
     out.gpu_mask_agreement_vs_mediapipe = agreement(await segmentOnGpu(canvas), mp, 640, 480);
 
     const PATHS = {
@@ -162,6 +165,8 @@ async function main() {
       LITERT_WEBGPU_GPUPRE_COMPOSITE: () => segmentOnGpu(canvas),
       LITERT_WEBGPU_ZOOM_COMPOSITE: () => zoomOnGpu(canvas),
       LITERT_WEBGPU_ZOOM_ALWAYS_COMPOSITE: () => zoomAlwaysOnGpu(canvas),
+      LITERT_WEBGPU_ZOOM_EMA_COMPOSITE: () => zoomEmaOnGpu(canvas),
+      LITERT_WEBGPU_ZOOM_EMA_ALWAYS_COMPOSITE: () => zoomEmaAlwaysOnGpu(canvas),
     };
     for (const input of INPUTS)
       for (let k = 0; k < REPEAT; k++)
@@ -179,6 +184,8 @@ async function main() {
             gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
             const t2 = performance.now();
             if (i >= WARMUP) { seg.push(t1 - t0); total.push(t2 - t0); zoomed += !!bg.box; }
+            if (mode === "LITERT_WEBGPU_ZOOM_EMA_ALWAYS_COMPOSITE" && k === 0)
+              (out.ema_boxes[input] ??= []).push({ raw: zoomBox(bg.first, { maxArea: Infinity }), box: bg.box && [...bg.box] });
           }
           out.results.push({ mode, input, frames: FRAMES, zoomed_frames: zoomed, segment_ms: stat(seg), with_readback_ms: stat(total) });
         }

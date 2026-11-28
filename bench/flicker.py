@@ -2,6 +2,8 @@
 
 Each clip pans a 640x480 window over a HaGRID still upscaled by SCALE, STEP pixels per frame on both axes. Consecutive
 masks are compared in source coordinates on their overlap: flicker = |A xor B| / |A or B| of the masks thresholded at 0.5.
+outside = share of the final person mask that lies outside the zoom box. That part keeps only the first pass. It is 0
+without EMA and measures how much of a moving person a lagging smoothed box leaves out of the second pass.
 The zoom path ports zoomBox and zoomedAt from browser/litert_gpu.js; the model runs on MediaPipe (CPU), not LiteRT.js.
 """
 import argparse
@@ -59,6 +61,7 @@ def frame_mask(seg, frame, zoom, margin, max_area, prev_box=None, ema=1.0):
     box = zoom_box(first, margin, max_area) if zoom else None
     if box is not None and prev_box is not None:
         box = ema * box + (1 - ema) * prev_box
+    outside = 0.0
     if box is not None:
         x, y, w, h = box
         crop = Image.fromarray(frame).transform((SIZE, SIZE), Image.EXTENT, (x * W, y * H, (x + w) * W, (y + h) * H), Image.BILINEAR)
@@ -66,15 +69,18 @@ def frame_mask(seg, frame, zoom, margin, max_area, prev_box=None, ema=1.0):
         su, sv = (U - x) / w, (V - y) / h
         inside = (su >= 0) & (su <= 1) & (sv >= 0) & (sv <= 1)
         p = np.where(inside, np.maximum(p, bilinear(second, su, sv)), p)
-    return p >= THRESHOLD, box
+        person = p >= THRESHOLD
+        outside = float((person & ~inside).sum() / max(person.sum(), 1))
+    return p >= THRESHOLD, box, outside
 
 
 def clip_flicker(seg, src, offsets, zoom, margin, max_area, ema=1.0):
-    masks, boxes = [], []
+    masks, boxes, outside = [], [], []
     for ox, oy in offsets:
-        m, box = frame_mask(seg, src[oy:oy + H, ox:ox + W], zoom, margin, max_area, boxes[-1] if boxes else None, ema)
+        m, box, out = frame_mask(seg, src[oy:oy + H, ox:ox + W], zoom, margin, max_area, boxes[-1] if boxes else None, ema)
         masks.append(m)
         boxes.append(box)
+        outside.append(out)
     values = []
     for (ax, ay), (bx, by), a, b in zip(offsets, offsets[1:], masks, masks[1:]):
         dx, dy = bx - ax, by - ay
@@ -82,7 +88,7 @@ def clip_flicker(seg, src, offsets, zoom, margin, max_area, ema=1.0):
         b = b[max(-dy, 0):H + min(-dy, 0), max(-dx, 0):W + min(-dx, 0)]
         union = (a | b).sum()
         values.append((a ^ b).sum() / union if union else 0.0)
-    return float(np.mean(values)), float(np.max(values)), sum(b is not None for b in boxes)
+    return float(np.mean(values)), float(np.max(values)), sum(b is not None for b in boxes), max(outside)
 
 
 def main():
@@ -108,8 +114,9 @@ def main():
         assert (args.frames - 1) * args.step + H <= src.shape[0], "pan leaves the source"
         row = {"image": line}
         for name, zoom in (("whole", False), ("zoom", True)):
-            row[name], row[f"{name}_max"], row[f"{name}_zoomed_frames"] = clip_flicker(seg, src, pan, zoom, args.margin, args.max_area, args.box_ema)
-            row[f"{name}_static"], _, _ = clip_flicker(seg, src, static, zoom, args.margin, args.max_area, args.box_ema)
+            row[name], row[f"{name}_max"], row[f"{name}_zoomed_frames"], row[f"{name}_outside_max"] = clip_flicker(
+                seg, src, pan, zoom, args.margin, args.max_area, args.box_ema)
+            row[f"{name}_static"], _, _, _ = clip_flicker(seg, src, static, zoom, args.margin, args.max_area, args.box_ema)
         rows.append(row)
 
     whole = np.array([r["whole"] for r in rows])
@@ -130,6 +137,9 @@ def main():
         "clips_with_zoom": int((zoomed > 0).sum()),
         "diff_mean_clips_with_zoom": float(d[zoomed > 0].mean()) if (zoomed > 0).any() else None,
         "clips_zoom_toggling": int(((zoomed > 0) & (zoomed < args.frames)).sum()),
+        "zoom_outside_max_mean": float(np.mean([r["zoom_outside_max"] for r in rows])),
+        "zoom_outside_max": float(max(r["zoom_outside_max"] for r in rows)),
+        "clips_person_outside_box": int(sum(r["zoom_outside_max"] > 0 for r in rows)),
         "static_max": float(max(max(r["whole_static"], r["zoom_static"]) for r in rows)),
     }
     Path(args.out).write_text(json.dumps({"args": vars(args), "summary": summary, "rows": rows}, indent=1))
