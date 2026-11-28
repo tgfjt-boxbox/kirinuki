@@ -76,6 +76,7 @@ class TFLiteModule(nn.Module):
 
     def forward(self, x):
         """x: NHWC float32 in the model's input range. Returns the NHWC output (logits for multiclass)."""
+        self.batch = x.shape[0]
         env = {self.inputs[0]: x}
         for name, ins, outs, o in self.ops:
             a = [self.tensor(env, i) if i >= 0 else None for i in ins]
@@ -85,6 +86,7 @@ class TFLiteModule(nn.Module):
     def op_conv_2d(self, a, o):
         x, w = a[0].permute(0, 3, 1, 2), a[1].permute(0, 3, 1, 2)
         s, d = o.StrideH(), o.DilationHFactor()
+        assert (s, d) == (o.StrideW(), o.DilationWFactor()), "only square strides and dilations are implemented"
         if o.Padding() == SAME:
             x = same_pad(x, w.shape[2:], s, d)
         y = F.conv2d(x, w, a[2] if len(a) > 2 else None, stride=s, dilation=d)
@@ -93,6 +95,7 @@ class TFLiteModule(nn.Module):
     def op_depthwise_conv_2d(self, a, o):
         x, w = a[0].permute(0, 3, 1, 2), a[1].permute(3, 0, 1, 2)
         s, d = o.StrideH(), o.DilationHFactor()
+        assert (s, d) == (o.StrideW(), o.DilationWFactor()), "only square strides and dilations are implemented"
         if o.Padding() == SAME:
             x = same_pad(x, w.shape[2:], s, d)
         y = F.conv2d(x, w, a[2] if len(a) > 2 else None, stride=s, dilation=d, groups=x.shape[1])
@@ -101,6 +104,7 @@ class TFLiteModule(nn.Module):
     def op_transpose_conv(self, a, o):
         shape, w, x = a[0], a[1], a[2].permute(0, 3, 1, 2)
         s, (kh, kw) = o.StrideH(), w.shape[1:3]
+        assert s == o.StrideW(), "only square strides are implemented"
         full = F.conv_transpose2d(x, w.permute(3, 0, 1, 2), stride=s)
         oh, ow = int(shape[1]), int(shape[2])
         top = max((x.shape[2] - 1) * s + kh - oh, 0) // 2 if o.Padding() == SAME else 0
@@ -119,8 +123,11 @@ class TFLiteModule(nn.Module):
     def op_reshape(self, a, o):
         shape = [int(v) for v in (a[1] if len(a) > 1 and a[1] is not None else o.NewShapeAsNumpy())]
         # The graph is traced at batch 1. Some reshapes fold image blocks into dim 0; the batch stays outermost there.
-        batch = a[0].numel() // math.prod(shape)
-        return a[0].reshape([shape[0] * batch] + shape[1:])
+        per_sample = a[0].numel() // self.batch
+        if -1 in shape:
+            shape[shape.index(-1)] = per_sample // -math.prod(shape)
+        assert math.prod(shape) == per_sample, f"reshape {shape} does not fit {per_sample} values per sample"
+        return a[0].reshape([shape[0] * self.batch] + shape[1:])
 
     def op_transpose(self, a, o):
         perm = [int(v) for v in a[1]]
