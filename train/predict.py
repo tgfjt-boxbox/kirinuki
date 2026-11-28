@@ -20,7 +20,7 @@ from PIL import Image
 KIRINUKI = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(KIRINUKI / "train"), str(KIRINUKI / "bench")]
 from cutout import to_640x480  # noqa: E402
-from run import Student  # noqa: E402
+from run import build  # noqa: E402
 
 SOURCES = {
     "hagrid": lambda line: KIRINUKI / "data/hagrid_v1" / line,
@@ -40,7 +40,7 @@ def main():
 
     train_args = json.loads((args.run_dir / "history.json").read_text())["args"]
     size = train_args["size"]
-    model = Student(train_args["width"])
+    model = build(train_args)
     model.load_state_dict(torch.load(args.run_dir / "student.pt", map_location="cpu"))
     model.eval()
     lines = args.list.read_text().split()

@@ -1,0 +1,2 @@
+finetune - e0 1422 diff +0.0077 se 0.0047 gained 24 lost 13
+finetune - mediapipe multiclass 1422 diff +0.0028 se 0.0056 gained 27 lost 23
