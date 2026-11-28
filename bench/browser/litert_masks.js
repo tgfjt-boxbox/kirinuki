@@ -7,6 +7,7 @@ const [source, list, framing, path = "cpu"] = location.hash.slice(1).split("/");
 const SOURCES = {
   hagrid: { list: `../../data/hagrid_v1/${list}.txt`, url: (line) => `../../data/hagrid_v1/${line}` },
   ep: { list: `../../data/easyportrait/${list}.txt`, url: (id) => `../../data/easyportrait/images/${id}.jpg` },
+  ep_train: { list: `../../data/easyportrait_train/${list}.txt`, url: (id) => `../../data/easyportrait_train/images/${id}.jpg` },
 };
 
 function cropBox(w, h) {

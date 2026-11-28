@@ -1,7 +1,8 @@
 """Distill the two-pass zoom teacher (#58 masks) into a single-pass student on MPS.
 
 Run through agent/train-mps, which sandboxes this file: no network, writes only under .cache/train-out ($HOME).
-Pairs: data/hagrid_v1/<list line> (image) and .cache/train-data/hagrid_teacher/<stem>.png (person probability in R).
+Each --data entry is SOURCE:LIST[:LIMIT]. A list line names an image under the source's root; its teacher mask is
+.cache/train-data/<source>_teacher/<stem>.png (person probability in R).
 """
 import argparse
 import json
@@ -19,13 +20,22 @@ ORG = KIRINUKI.parent
 OUT = ORG / ".cache/train-out"
 
 
-def load_pairs(list_file, teacher_dir, size, limit):
+SOURCES = {
+    "hagrid": lambda line: KIRINUKI / "data/hagrid_v1" / line,
+    "ep_train": lambda line: KIRINUKI / "data/easyportrait_train/images" / f"{line}.jpg",
+}
+
+
+def load_pairs(data, size):
     images, targets = [], []
-    for line in (KIRINUKI / list_file).read_text().split()[:limit]:
-        rgb = Image.open(KIRINUKI / "data/hagrid_v1" / line).convert("RGB").resize((size, size), Image.BILINEAR)
-        mask = Image.open(teacher_dir / f"{Path(line).stem}.png").getchannel("R").resize((size, size), Image.BILINEAR)
-        images.append(np.asarray(rgb))
-        targets.append(np.asarray(mask))
+    for entry in data:
+        source, list_file, *limit = entry.split(":")
+        lines = (KIRINUKI / list_file).read_text().split()
+        for line in lines[:int(limit[0])] if limit else lines:
+            rgb = Image.open(SOURCES[source](line)).convert("RGB").resize((size, size), Image.BILINEAR)
+            mask = Image.open(ORG / f".cache/train-data/{source}_teacher/{Path(line).stem}.png").getchannel("R")
+            images.append(np.asarray(rgb))
+            targets.append(np.asarray(mask.resize((size, size), Image.BILINEAR)))
     x = torch.from_numpy(np.stack(images)).permute(0, 3, 1, 2).contiguous()
     y = torch.from_numpy(np.stack(targets))[:, None].contiguous()
     return x, y
@@ -62,9 +72,7 @@ def batches(x, y, batch, device, shuffle, generator=None):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--list", default="data/hagrid_v1/train_500.txt")
-    ap.add_argument("--teacher", default=str(ORG / ".cache/train-data/hagrid_teacher"))
-    ap.add_argument("--limit", type=int, default=9000)
+    ap.add_argument("--data", nargs="+", default=["hagrid:data/hagrid_v1/train_500.txt:9000"])
     ap.add_argument("--val", type=int, default=200)
     ap.add_argument("--size", type=int, default=256)
     ap.add_argument("--width", type=int, default=16)
@@ -78,7 +86,7 @@ def main():
     torch.manual_seed(args.seed)
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     t0 = time.time()
-    x, y = load_pairs(args.list, Path(args.teacher), args.size, args.limit)
+    x, y = load_pairs(args.data, args.size)
     split = torch.randperm(len(x), generator=torch.Generator().manual_seed(args.seed))
     xv, yv, xt, yt = x[split[:args.val]], y[split[:args.val]], x[split[args.val:]], y[split[args.val:]]
     model = Student(args.width).to(device)
