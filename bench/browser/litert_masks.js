@@ -40,7 +40,7 @@ async function main() {
       return infer(model, environment, host);
     };
     const fullCanvas = document.createElement("canvas");
-    let zoomed = 0;
+    const boxes = {};
     for (const line of lines) {
       const stem = line.split("/").pop().replace(/\.[^.]+$/, "");
       try {
@@ -58,7 +58,7 @@ async function main() {
         if (path === "zoom") {
           // The second pass has finer detail than SIZE×SIZE inside the box, so the mask is written at frame resolution
           // (long side capped at MASK_MAX; the evaluators resize it to the image).
-          zoomed += !!bg.box;
+          if (bg.box) boxes[stem] = bg.box;
           const fw = frame.naturalWidth ?? frame.width, fh = frame.naturalHeight ?? frame.height;
           const scale = Math.min(1, MASK_MAX / Math.max(fw, fh));
           const w = Math.round(fw * scale), h = Math.round(fh * scale);
@@ -88,7 +88,8 @@ async function main() {
         out.errors.push(`${line}: ${e}`);
       }
     }
-    out.zoomed = zoomed;
+    out.zoomed = Object.keys(boxes).length;
+    out.boxes = boxes;
     model.delete();
   } catch (e) {
     out.error = String(e && e.stack || e);
