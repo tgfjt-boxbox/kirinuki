@@ -1,0 +1,9 @@
+001764c7-7b4b-488b-bf60-a80655789729.jpg: max |torch - mediapipe| 3.81e-06, mean 2.15e-08, argmax agreement 1.0000
+0738fdfa-5bca-4fb2-8be3-c795ebab77d8.jpg: max |torch - mediapipe| 3.04e-06, mean 2.15e-08, argmax agreement 1.0000
+0e98bc71-0fe8-4b0c-96b7-43dac7fee332.jpg: max |torch - mediapipe| 9.06e-06, mean 5.97e-08, argmax agreement 1.0000
+1616579a-2aa8-4795-9bb9-ba70342605db.jpg: max |torch - mediapipe| 3.99e-06, mean 2.14e-08, argmax agreement 1.0000
+1d1e3fac-f9c0-43a0-9509-b21d9172e6c2.jpg: max |torch - mediapipe| 3.40e-06, mean 2.48e-08, argmax agreement 1.0000
+0078dd75-b096-4991-b34e-6ca5f5600276.jpg: max |torch - mediapipe| 4.05e-06, mean 3.01e-08, argmax agreement 1.0000
+1e24a48e-237e-4fee-aeb8-d24b543d4bdb.jpg: max |torch - mediapipe| 6.53e-06, mean 2.12e-08, argmax agreement 1.0000
+3dc0a828-ddb3-46f3-95f6-4735f61d3dd4.jpg: max |torch - mediapipe| 3.40e-06, mean 2.25e-08, argmax agreement 1.0000
+worst max diff 9.06e-06
