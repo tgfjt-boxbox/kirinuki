@@ -80,6 +80,7 @@ def main():
     ap.add_argument("--batch", type=int, default=32)
     ap.add_argument("--lr", type=float, default=3e-3)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--flip", action="store_true", help="mirror a random half of each training batch left to right")
     ap.add_argument("--name", default="smoke")
     args = ap.parse_args()
 
@@ -116,6 +117,9 @@ def main():
         t = time.time()
         losses = []
         for xb, yb in batches(xt, yt, args.batch, device, True, g):
+            if args.flip:
+                f = (torch.rand(len(xb), generator=g) < 0.5).to(device)[:, None, None, None]
+                xb, yb = torch.where(f, xb.flip(-1), xb), torch.where(f, yb.flip(-1), yb)
             loss = F.binary_cross_entropy_with_logits(model(xb), yb)
             opt.zero_grad()
             loss.backward()
