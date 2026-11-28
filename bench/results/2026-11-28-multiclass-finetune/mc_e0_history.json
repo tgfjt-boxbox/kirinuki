@@ -1,0 +1,27 @@
+{
+ "args": {
+  "data": [
+   "hagrid:data/hagrid_v1/train_500.txt:300"
+  ],
+  "val": 100,
+  "size": 256,
+  "width": 16,
+  "epochs": 0,
+  "batch": 32,
+  "lr": 0.003,
+  "seed": 0,
+  "flip": false,
+  "init": "multiclass",
+  "name": "mc_e0"
+ },
+ "device": "mps",
+ "params": 4070284,
+ "history": [
+  {
+   "epoch": 0,
+   "val_bce": 0.2531145751476288,
+   "val_bce_floor": 0.24940182268619537,
+   "val_majority_agreement": 0.6912187337875366
+  }
+ ]
+}

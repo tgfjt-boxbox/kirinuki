@@ -1,0 +1,49 @@
+{
+ "args": {
+  "data": [
+   "hagrid:data/hagrid_v1/train_500.txt:9000",
+   "ep_train:data/easyportrait_train/ids_1000.txt"
+  ],
+  "val": 200,
+  "size": 256,
+  "width": 16,
+  "epochs": 3,
+  "batch": 16,
+  "lr": 1e-05,
+  "seed": 0,
+  "flip": true,
+  "init": "multiclass",
+  "name": "mc_ft_e3"
+ },
+ "device": "mps",
+ "params": 4070284,
+ "history": [
+  {
+   "epoch": 0,
+   "val_bce": 0.2543490862846374,
+   "val_bce_floor": 0.2502897381782532,
+   "val_majority_agreement": 0.7122077941894531
+  },
+  {
+   "epoch": 1,
+   "train_bce": 0.2560626455806013,
+   "val_bce": 0.2573742210865021,
+   "val_pixel_agreement": 0.9910308837890625,
+   "seconds": 146.413920879364
+  },
+  {
+   "epoch": 2,
+   "train_bce": 0.2550871919652183,
+   "val_bce": 0.2551051604747772,
+   "val_pixel_agreement": 0.9925485992431641,
+   "seconds": 145.6648280620575
+  },
+  {
+   "epoch": 3,
+   "train_bce": 0.2544368045073349,
+   "val_bce": 0.2543327879905701,
+   "val_pixel_agreement": 0.9936579895019532,
+   "seconds": 145.59101796150208
+  }
+ ]
+}
