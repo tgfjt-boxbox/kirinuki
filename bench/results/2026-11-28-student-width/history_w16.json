@@ -1,0 +1,165 @@
+{
+ "args": {
+  "list": "data/hagrid_v1/train_500.txt",
+  "teacher": "/Users/tgfjt/ghq/github.com/tgfjt-boxbox/.cache/train-data/hagrid_teacher",
+  "limit": 9000,
+  "val": 200,
+  "size": 256,
+  "width": 16,
+  "epochs": 20,
+  "batch": 32,
+  "lr": 0.003,
+  "seed": 0,
+  "name": "smoke9k"
+ },
+ "device": "mps",
+ "params": 243073,
+ "history": [
+  {
+   "epoch": 0,
+   "val_bce": 0.6926640319824219,
+   "val_bce_floor": 0.25430935621261597,
+   "val_majority_agreement": 0.7295864224433899
+  },
+  {
+   "epoch": 1,
+   "train_bce": 0.4958500378782099,
+   "val_bce": 0.45733325242996214,
+   "val_pixel_agreement": 0.8494454193115234,
+   "seconds": 5.494659900665283
+  },
+  {
+   "epoch": 2,
+   "train_bce": 0.4476559817790985,
+   "val_bce": 0.4297072374820709,
+   "val_pixel_agreement": 0.8724454498291015,
+   "seconds": 5.444952964782715
+  },
+  {
+   "epoch": 3,
+   "train_bce": 0.42399281859397886,
+   "val_bce": 0.41201177120208743,
+   "val_pixel_agreement": 0.8849563598632812,
+   "seconds": 5.447216033935547
+  },
+  {
+   "epoch": 4,
+   "train_bce": 0.4050274848937988,
+   "val_bce": 0.3986565589904785,
+   "val_pixel_agreement": 0.8923170471191406,
+   "seconds": 5.452709197998047
+  },
+  {
+   "epoch": 5,
+   "train_bce": 0.3893461123379794,
+   "val_bce": 0.3817360019683838,
+   "val_pixel_agreement": 0.9063591766357422,
+   "seconds": 5.449188947677612
+  },
+  {
+   "epoch": 6,
+   "train_bce": 0.37847392429005017,
+   "val_bce": 0.3740295124053955,
+   "val_pixel_agreement": 0.9113166046142578,
+   "seconds": 5.453161954879761
+  },
+  {
+   "epoch": 7,
+   "train_bce": 0.3706265017119321,
+   "val_bce": 0.3662066125869751,
+   "val_pixel_agreement": 0.919061279296875,
+   "seconds": 5.449671745300293
+  },
+  {
+   "epoch": 8,
+   "train_bce": 0.36272103136236017,
+   "val_bce": 0.36747252225875854,
+   "val_pixel_agreement": 0.9162608337402344,
+   "seconds": 5.44767689704895
+  },
+  {
+   "epoch": 9,
+   "train_bce": 0.35837006308815694,
+   "val_bce": 0.3605306303501129,
+   "val_pixel_agreement": 0.9214003753662109,
+   "seconds": 5.44659686088562
+  },
+  {
+   "epoch": 10,
+   "train_bce": 0.3526350487362255,
+   "val_bce": 0.36069685220718384,
+   "val_pixel_agreement": 0.9234003448486328,
+   "seconds": 5.449284315109253
+  },
+  {
+   "epoch": 11,
+   "train_bce": 0.34819086269898847,
+   "val_bce": 0.3551876556873321,
+   "val_pixel_agreement": 0.9269136047363281,
+   "seconds": 5.446238994598389
+  },
+  {
+   "epoch": 12,
+   "train_bce": 0.3434661439332095,
+   "val_bce": 0.35525471210479737,
+   "val_pixel_agreement": 0.9257299041748047,
+   "seconds": 5.4479820728302
+  },
+  {
+   "epoch": 13,
+   "train_bce": 0.34147907744754447,
+   "val_bce": 0.35647724866867064,
+   "val_pixel_agreement": 0.9253474426269531,
+   "seconds": 5.874825954437256
+  },
+  {
+   "epoch": 14,
+   "train_bce": 0.337849987745285,
+   "val_bce": 0.36002129435539243,
+   "val_pixel_agreement": 0.9251378631591797,
+   "seconds": 6.1657938957214355
+  },
+  {
+   "epoch": 15,
+   "train_bce": 0.3353260904008692,
+   "val_bce": 0.3580829405784607,
+   "val_pixel_agreement": 0.9258279418945312,
+   "seconds": 6.218565940856934
+  },
+  {
+   "epoch": 16,
+   "train_bce": 0.3312875439903953,
+   "val_bce": 0.358253778219223,
+   "val_pixel_agreement": 0.9225373077392578,
+   "seconds": 6.207788705825806
+  },
+  {
+   "epoch": 17,
+   "train_bce": 0.33004761110652575,
+   "val_bce": 0.35552692890167237,
+   "val_pixel_agreement": 0.925575942993164,
+   "seconds": 6.198022842407227
+  },
+  {
+   "epoch": 18,
+   "train_bce": 0.3274207254973325,
+   "val_bce": 0.35331479549407957,
+   "val_pixel_agreement": 0.9286865997314453,
+   "seconds": 6.196138858795166
+  },
+  {
+   "epoch": 19,
+   "train_bce": 0.32569634144956416,
+   "val_bce": 0.3525959289073944,
+   "val_pixel_agreement": 0.9280885314941406,
+   "seconds": 6.204831838607788
+  },
+  {
+   "epoch": 20,
+   "train_bce": 0.3231567554040389,
+   "val_bce": 0.35662983655929564,
+   "val_pixel_agreement": 0.927105712890625,
+   "seconds": 6.1923089027404785
+  }
+ ]
+}

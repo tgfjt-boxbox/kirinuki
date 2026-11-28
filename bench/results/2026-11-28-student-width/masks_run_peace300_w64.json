@@ -1,0 +1,21 @@
+{
+ "run_dir": "../.cache/train-out/w64e20",
+ "train_args": {
+  "list": "data/hagrid_v1/train_500.txt",
+  "teacher": "/Users/tgfjt/ghq/github.com/tgfjt-boxbox/.cache/train-data/hagrid_teacher",
+  "limit": 9000,
+  "val": 200,
+  "size": 256,
+  "width": 64,
+  "epochs": 20,
+  "batch": 32,
+  "lr": 0.003,
+  "seed": 0,
+  "name": "w64e20"
+ },
+ "source": "hagrid",
+ "list": "data/hagrid_v1/peace_300.txt",
+ "framing": "crop43",
+ "images": 300,
+ "seconds": 9.4
+}
