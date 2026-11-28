@@ -9,6 +9,8 @@ import json
 import time
 from pathlib import Path
 
+import sys
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -18,6 +20,8 @@ from PIL import Image
 KIRINUKI = Path(__file__).resolve().parents[1]
 ORG = KIRINUKI.parent
 OUT = ORG / ".cache/train-out"
+sys.path.insert(0, str(KIRINUKI / "train"))
+from tflite_torch import TFLiteModule  # noqa: E402
 
 
 SOURCES = {
@@ -63,6 +67,23 @@ class Student(nn.Module):
         return F.interpolate(self.head(d), size=x.shape[-2:], mode="bilinear", align_corners=False)
 
 
+class MulticlassPerson(nn.Module):
+    """selfie_multiclass_256x256 with trainable weights. Returns the person logit: sigmoid of it is 1 - softmax background,
+    the person probability eval_person_iou.MODELS takes from multiclass."""
+
+    def __init__(self):
+        super().__init__()
+        self.net = TFLiteModule(KIRINUKI / "models/selfie_multiclass_256x256.tflite")
+
+    def forward(self, x):
+        logits = self.net(x.permute(0, 2, 3, 1))
+        return (torch.logsumexp(logits[..., 1:], -1) - logits[..., 0])[:, None]
+
+
+def build(args):
+    return MulticlassPerson() if args.get("init") == "multiclass" else Student(args["width"])
+
+
 def batches(x, y, batch, device, shuffle, generator=None):
     order = torch.randperm(len(x), generator=generator) if shuffle else torch.arange(len(x))
     for i in range(0, len(x), batch):
@@ -81,6 +102,8 @@ def main():
     ap.add_argument("--lr", type=float, default=3e-3)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--flip", action="store_true", help="mirror a random half of each training batch left to right")
+    ap.add_argument("--init", choices=["scratch", "multiclass"], default="scratch",
+                    help="multiclass fine-tunes selfie_multiclass_256x256 (input size 256; --width is ignored)")
     ap.add_argument("--name", default="smoke")
     args = ap.parse_args()
 
@@ -90,7 +113,8 @@ def main():
     x, y = load_pairs(args.data, args.size)
     split = torch.randperm(len(x), generator=torch.Generator().manual_seed(args.seed))
     xv, yv, xt, yt = x[split[:args.val]], y[split[:args.val]], x[split[args.val:]], y[split[args.val:]]
-    model = Student(args.width).to(device)
+    assert args.init != "multiclass" or args.size == 256, "multiclass takes 256x256 input"
+    model = build(vars(args)).to(device)
     params = sum(p.numel() for p in model.parameters())
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr)
     print(f"device {device} train {len(xt)} val {len(xv)} params {params} load {time.time() - t0:.1f}s", flush=True)
